@@ -135,7 +135,7 @@ class Agent:
 
         self.job = job
         if job.jtype == HAUL:
-            self.phase = "pickup"
+            self.phase = "collect"
         self._begin_path(path)
 
     # ------------------------------------------------------------------ move
@@ -161,36 +161,52 @@ class Agent:
             self.py += dy / dist * step
 
     def _arrive(self, game):
+        # Delivering accumulated cargo (the pile jobs were released during collect,
+        # so this must not depend on self.job).
+        if self.phase == "deliver":
+            self._deliver(game)
+            return
         job = self.job
         if job is None:
             self.state = "IDLE"
             return
         world = game.world
 
-        if job.jtype == HAUL:
-            if self.phase == "pickup":
-                drop = world.take_drop(world.get_tile(job.q, job.r))
-                if not drop:
-                    self._finish(game, done=True)
-                    return
-                self.carrying = drop
-                # head to HQ to drop off
-                path = pathfinding.find_path(world, self.hex, world.hq)
-                if path is None:
-                    path, _ = pathfinding.find_path_adjacent(world, self.hex, world.hq)
+        if job.jtype == HAUL:      # phase == "collect"
+            tile = world.get_tile(job.q, job.r)
+            if self.carrying is None:
+                self.carrying = {}
+            cap_left = self.carry - sum(self.carrying.values())
+            for res, amt in world.take_drop_capped(tile, cap_left).items():
+                self.carrying[res] = self.carrying.get(res, 0) + amt
+            had_leftover = bool(tile.drops)
+            game.jobs.release(self.job, done=True)   # remove this pile's job first
+            self.job = None
+            if had_leftover:
+                game.jobs.add(HAUL, job.q, job.r)    # remainder -> another trip
+            # keep collecting from nearby piles until full, then deliver
+            if self.carry - sum(self.carrying.values()) > 0:
+                nxt = game.jobs.claim_nearest(self, game, HAUL)
+                if nxt is not None:
+                    p = pathfinding.find_path(world, self.hex, nxt.pos)
+                    if p is None:
+                        p, _ = pathfinding.find_path_adjacent(world, self.hex, nxt.pos)
+                    if p is not None:
+                        self.job = nxt
+                        self.phase = "collect"
+                        self._begin_path(p)
+                        return
+                    game.jobs.release(nxt, cooldown=1.0)   # unreachable, give back
+            if self.carrying:
                 self.phase = "deliver"
-                self._begin_path(path or [])
+                p = pathfinding.find_path(world, self.hex, world.hq)
+                if p is None:
+                    p, _ = pathfinding.find_path_adjacent(world, self.hex, world.hq)
+                self._begin_path(p or [])
                 return
-            else:  # deliver
-                if self.carrying:
-                    for res, amt in self.carrying.items():
-                        game.economy.add(res, amt)
-                    game.log(", ".join(f"+{a} {config.RESOURCE_LABEL.get(res, res)}"
-                                       for res, a in self.carrying.items()))
-                    self.carrying = None
-                    game.register_action(self)
-                self._finish(game, done=True)
-                return
+            self.state = "IDLE"
+            self.phase = None
+            return
 
         if job.jtype == BUILD_ROAD and self.phase == "fetch":
             # At storage: take the rubble the road needs, then carry it to the site.
@@ -256,6 +272,21 @@ class Agent:
                 game.log(f"{config.BUILDINGS[t.building.btype]['name']} built")
         game.register_action(self)
         self._finish(game, done=True)
+
+    def _deliver(self, game):
+        """Drop accumulated cargo into the stockpile (one haul action per trip)."""
+        if self.carrying:
+            for res, amt in self.carrying.items():
+                game.economy.add(res, amt)
+            game.log(", ".join(f"+{a} {config.RESOURCE_LABEL.get(res, res)}"
+                               for res, a in self.carrying.items()))
+            self.carrying = None
+            game.register_action(self)
+        self.job = None
+        self.phase = None
+        self.path = []
+        self._target_px = None
+        self.state = "IDLE"
 
     def _finish(self, game, done):
         game.jobs.release(self.job, done=done)

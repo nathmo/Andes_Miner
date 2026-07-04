@@ -123,13 +123,13 @@ RECRUIT_COST = {"iron": 2}       # cost to hire one more worker
 #   mine_mult / clean_mult scale the base times (higher = faster).
 #   speed px/sec, carry = ore stacks per haul trip.
 VEHICLES = {
-    "transporter_s": dict(name="Small Transporter", tier="small", speed=95,  carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
+    "transporter_s": dict(name="Small Transporter", tier="small", speed=95,  carry=1, mine_mult=0, clean_mult=0, jobs=("HAUL",),
                           cost={"iron": 2}, color=(90, 150, 220)),
     "miner_s":       dict(name="Small Mining Machine", tier="small", speed=70, carry=0, mine_mult=3, clean_mult=0, mine_reach=2, jobs=("MINE",),
                           cost={"iron": 3, "copper": 1}, color=(220, 150, 80)),
     "dozer_s":       dict(name="Small Bulldozer", tier="small", speed=80, carry=0, mine_mult=0, clean_mult=3, jobs=("CLEAN",),
                           cost={"iron": 2, "copper": 1}, color=(220, 200, 90)),
-    "truck_m":       dict(name="Medium Truck", tier="medium", speed=115, carry=6, mine_mult=0, clean_mult=0, jobs=("HAUL",),
+    "truck_m":       dict(name="Medium Truck", tier="medium", speed=115, carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
                           cost={"iron": 5, "copper": 2}, color=(70, 120, 200)),
     "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=80, carry=0, mine_mult=6, clean_mult=0, mine_reach=3, jobs=("MINE",),
                           cost={"iron": 6, "copper": 3}, color=(230, 130, 60)),
@@ -137,7 +137,7 @@ VEHICLES = {
                           cost={"iron": 5, "copper": 2}, color=(230, 210, 70)),
     "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=95, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
                           cost={"iron": 5, "copper": 2}, color=(140, 142, 150)),
-    "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=8, mine_mult=8, clean_mult=8, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
+    "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=9, mine_mult=8, clean_mult=8, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
                           cost={"iron": 15, "copper": 10}, color=(200, 90, 200)),
 }
 

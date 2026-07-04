@@ -141,3 +141,23 @@ class World:
             tile.drops = {}
             self._mark_modified(tile)
         return drops
+
+    def take_drop_capped(self, tile, cap):
+        """Remove up to `cap` total units from a tile's piles; return what was
+        taken as a dict. Leaves any remainder on the tile."""
+        taken = {}
+        left = cap
+        for res in list(tile.drops.keys()):
+            if left <= 0:
+                break
+            amt = min(tile.drops[res], left)
+            if amt <= 0:
+                continue
+            taken[res] = taken.get(res, 0) + amt
+            tile.drops[res] -= amt
+            left -= amt
+            if tile.drops[res] <= 0:
+                del tile.drops[res]
+        if taken:
+            self._mark_modified(tile)
+        return taken

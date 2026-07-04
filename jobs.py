@@ -106,6 +106,25 @@ class JobManager:
                 return best
         return None
 
+    def claim_nearest(self, agent, game, jtype):
+        """Reserve and return the nearest unclaimed valid job of one type (used to
+        chain haul pickups), or None."""
+        astart = agent.hex
+        best = None
+        best_d = None
+        for job in self.jobs:
+            if job.agent is not None or job.cooldown > 0 or job.jtype != jtype:
+                continue
+            if not self._still_valid(job):
+                continue
+            d = hexgrid.axial_distance(astart, job.pos)
+            if best_d is None or d < best_d:
+                best, best_d = job, d
+        if best:
+            best.agent = agent
+            return best
+        return None
+
     def release(self, job, cooldown=0.0, done=False):
         job.agent = None
         job.cooldown = cooldown
