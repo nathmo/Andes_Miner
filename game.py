@@ -72,6 +72,10 @@ class Game:
         # save/load requests raised by input, handled by main
         self.want_save = False
         self.want_load = False
+        self.want_load_path = None    # load a specific backup slot
+        self.show_load_menu = False
+        self._backup_t = 0.0
+        self._backup_step = 0
 
     # ------------------------------------------------------------------ depot
     def _ensure_depot(self):
@@ -151,6 +155,7 @@ class Game:
             self._auto_trade(sim_dt)
         self._update_messages(real_dt)
         self._autosave_t += real_dt
+        self._backup_t += real_dt
 
     # ------------------------------------------------------------------ goal
     def _update_goal(self):

@@ -148,4 +148,4 @@ class InputHandler:
         elif k == pygame.K_F5:
             game.want_save = True
         elif k == pygame.K_F9:
-            game.want_load = True
+            game.show_load_menu = not game.show_load_menu

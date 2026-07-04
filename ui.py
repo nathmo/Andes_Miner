@@ -79,8 +79,34 @@ class UI:
         self._draw_bottombar(surf, game, mouse)
         self._draw_building_panel(surf, game, mouse)
         self._draw_market_panel(surf, game, mouse)
+        self._draw_load_menu(surf, game, mouse)
         self._draw_tileinfo(surf, game)
         self._draw_messages(surf, game)
+
+    # ------------------------------------------------------------------ load menu
+    def _draw_load_menu(self, surf, game, mouse):
+        if not game.show_load_menu:
+            return
+        import save as savemod
+        rows = [("Latest save", config.SAVE_FILE, savemod.os.path.isfile(config.SAVE_FILE))]
+        for (k, path, age) in savemod.list_backups():
+            rows.append((f"Backup ~{age} min ago", path, True))
+        pw, ph = 320, 56 + 26 * max(1, len(rows))
+        box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
+        self._panels.append(box)
+        pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
+        pygame.draw.rect(surf, config.COL_ACCENT, box, 1, border_radius=8)
+        surf.blit(self.font_b.render("LOAD / ROLL BACK", True, config.COL_TEXT), (box.x + 14, box.y + 10))
+        rc = pygame.Rect(box.right - 60, box.y + 8, 50, 22)
+        self._button(surf, rc, "Close", mouse)
+        self._add(rc, "close_load")
+        y = box.y + 40
+        for (label, path, exists) in rows:
+            r = pygame.Rect(box.x + 12, y, pw - 24, 22)
+            self._button(surf, r, label, mouse, enabled=exists)
+            if exists:
+                self._add(r, "load_slot", path)
+            y += 26
 
     # ------------------------------------------------------------------ market panel
     def _sparkline(self, surf, values, rect, col):
@@ -465,3 +491,8 @@ class UI:
             game.auto_coffee_min += 1
         elif action == "wh_smart":
             game.auto_smart_sell = not game.auto_smart_sell
+        elif action == "load_slot":
+            game.want_load_path = arg
+            game.show_load_menu = False
+        elif action == "close_load":
+            game.show_load_menu = False

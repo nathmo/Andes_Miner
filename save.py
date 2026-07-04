@@ -12,12 +12,41 @@ persists for the session and, where the host enables it, across reloads.
 
 import json
 import os
+import shutil
 
 import config
 from game import Game
 from buildings import Building
 from tiles import ROAD
 from jobs import CONSTRUCT
+
+
+def backup_path(k):
+    d = os.path.dirname(config.SAVE_FILE) or "."
+    return os.path.join(d, config.BACKUP_FILE.format(k))
+
+
+def rolling_backup(game):
+    """Hanoi-style rotation: promote slot k-1 -> k when 2^k divides the step count,
+    then write the current state to slot 0. Leaves ~2,4,...,256-min-old snapshots."""
+    game._backup_step += 1
+    n = game._backup_step
+    for k in range(config.BACKUP_SLOTS - 1, 0, -1):
+        if n % (2 ** k) == 0:
+            src = backup_path(k - 1)
+            if os.path.isfile(src):
+                shutil.copy(src, backup_path(k))
+    save_game(game, backup_path(0))
+
+
+def list_backups():
+    """Available backup slots as (slot, path, nominal_age_minutes), youngest first."""
+    out = []
+    for k in range(config.BACKUP_SLOTS):
+        p = backup_path(k)
+        if os.path.isfile(p):
+            out.append((k, p, 2 ** (k + 1)))
+    return out
 
 
 def save_game(game, path=config.SAVE_FILE):
@@ -54,6 +83,7 @@ def save_game(game, path=config.SAVE_FILE):
         "auto_cash_min": game.auto_cash_min,
         "auto_coffee_min": game.auto_coffee_min,
         "auto_smart_sell": game.auto_smart_sell,
+        "backup_step": game._backup_step,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -139,5 +169,6 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.auto_cash_min = data.get("auto_cash_min", config.AUTO_CASH_MIN)
     game.auto_coffee_min = data.get("auto_coffee_min", config.AUTO_COFFEE_MIN)
     game.auto_smart_sell = data.get("auto_smart_sell", False)
+    game._backup_step = data.get("backup_step", 0)
     game._ensure_depot()          # add the depot to saves that predate it
     return game

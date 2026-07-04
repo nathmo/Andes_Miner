@@ -71,6 +71,18 @@ async def main():
                     game.log("No save file found")
             except Exception as ex:
                 game.log(f"Load failed: {ex}")
+        if game.want_load_path:
+            path = game.want_load_path
+            game.want_load_path = None
+            try:
+                loaded = savemod.load_game(path=path, camera=camera)
+                if loaded:
+                    game = loaded
+                    game.log("Restored backup")
+                else:
+                    game.log("Backup not found")
+            except Exception as ex:
+                game.log(f"Load failed: {ex}")
 
         # autosave
         if game._autosave_t >= config.AUTOSAVE_INTERVAL:
@@ -78,6 +90,15 @@ async def main():
             try:
                 savemod.save_game(game)
                 game.log("Auto-saved")
+            except Exception:
+                pass
+
+        # rolling exponential backups
+        if game._backup_t >= config.BACKUP_INTERVAL:
+            game._backup_t = 0.0
+            try:
+                savemod.rolling_backup(game)
+                game.log("Backup saved")
             except Exception:
                 pass
 

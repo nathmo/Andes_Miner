@@ -18,6 +18,12 @@ SPEED_STEPS = [1.0, 2.0, 3.0]
 AUTOSAVE_INTERVAL = 90.0          # seconds between auto-saves
 SAVE_FILE = "andes_save.json"
 
+# Rolling backups: every BACKUP_INTERVAL a snapshot is taken and rotated Hanoi-style
+# across BACKUP_SLOTS, so you keep roughly 2, 4, 8, ... 256-min-old restore points.
+BACKUP_INTERVAL = 120.0          # real seconds between rolling backups
+BACKUP_SLOTS = 8
+BACKUP_FILE = "andes_backup_{}.json"
+
 # Day/night: the sun rises and sets over DAY_LENGTH sim-seconds. Sun output (0 at
 # night, 1 at noon) both dims the world and scales Solar Array yield.
 DAY_LENGTH = 120.0

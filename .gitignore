@@ -4,6 +4,7 @@ __pycache__/
 
 # Save files (player data)
 andes_save.json
+andes_backup_*.json
 *.save.json
 
 # pygbag / PyInstaller build output
