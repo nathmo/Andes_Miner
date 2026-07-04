@@ -9,6 +9,7 @@ on foot. So building vehicles trades hand-labour for faster specialised units.
 """
 
 import heapq
+import math
 
 import config
 import hexgrid
@@ -46,7 +47,8 @@ class Game:
         self.speed_index = 0
         self.paused = False
 
-        # environment: sun factor drives solar output (item 24 makes it cycle)
+        # environment: day/night. time_of_day in [0,1); sun 0 at night, 1 at noon.
+        self.time_of_day = 0.35       # start mid-morning
         self.sun = 1.0
 
         # upkeep (salary paid in iced coffee, per completed job — register_action)
@@ -114,8 +116,15 @@ class Game:
         return False
 
     # ------------------------------------------------------------------ update
+    def _advance_time(self, sim_dt):
+        """Advance the day/night clock and recompute the sun factor (raised cosine
+        peaking at noon, zero through the night)."""
+        self.time_of_day = (self.time_of_day + sim_dt / config.DAY_LENGTH) % 1.0
+        self.sun = max(0.0, math.cos((self.time_of_day - 0.5) * 2.0 * math.pi))
+
     def update(self, sim_dt, real_dt):
         if not self.paused and sim_dt > 0:
+            self._advance_time(sim_dt)
             self.jobs.update(sim_dt)
             was_striking = self.wages_due
             for a in self.iter_active_agents():

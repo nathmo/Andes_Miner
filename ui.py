@@ -149,6 +149,12 @@ class UI:
         vtxt = f"Villages linked: {game.villages_connected}/{vn}"
         vcol = (240, 200, 90) if game.villages_connected >= vn else (140, 210, 150)
         surf.blit(self.font.render(vtxt, True, vcol), (ox, 11))
+        # sun/moon indicator (bright yellow by day, dim blue by night)
+        ox += self.font.size(vtxt)[0] + 18
+        s = game.sun
+        scol = (int(150 + 105 * s), int(160 + 55 * s), int(205 - 90 * s))
+        pygame.draw.circle(surf, scol, (ox + 9, TOP_H // 2), 8)
+        pygame.draw.circle(surf, (20, 24, 34), (ox + 9, TOP_H // 2), 8, 1)
 
         # speed / pause on the right
         bx = self.sw - 4

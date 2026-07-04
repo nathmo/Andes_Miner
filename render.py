@@ -85,6 +85,14 @@ class Renderer:
         self._draw_hover(surface, game, cam, size)
         self._draw_selection(surface, game)
 
+        # Day/night: dim the world (not the UI) toward night.
+        sun = getattr(game, "sun", 1.0)
+        if sun < 0.999:
+            alpha = int((1.0 - sun) * config.NIGHT_MAX_ALPHA)
+            if alpha > 0:
+                ov = self._night_overlay(surface.get_size(), alpha)
+                surface.blit(ov, (0, 0))
+
     # ------------------------------------------------------------------ tiles
     def _draw_tile(self, surface, tile, cx, cy, size, show_mine_hint, game):
         c = hexgrid.hex_corners(cx, cy, size)
@@ -174,6 +182,15 @@ class Renderer:
                     ox = cx + (i - (n - 1) / 2.0) * rad * 0.95
                     pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
                     pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
+
+    def _night_overlay(self, size, alpha):
+        """Cached dark-blue overlay used to dim the world at night."""
+        cached = getattr(self, "_night_cache", None)
+        if cached is None or cached.get_size() != size:
+            self._night_cache = pygame.Surface(size, pygame.SRCALPHA)
+        ov = self._night_cache
+        ov.fill((12, 18, 44, max(0, min(255, alpha))))
+        return ov
 
     # ------------------------------------------------------------------ cables
     def _draw_cables(self, surface, game, cam):

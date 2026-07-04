@@ -47,6 +47,7 @@ def save_game(game, path=config.SAVE_FILE):
                    if game.camera is not None else {}),
         "speed_index": game.speed_index,
         "paused": game.paused,
+        "time_of_day": game.time_of_day,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -125,5 +126,6 @@ def load_game(path=config.SAVE_FILE, camera=None):
         camera.zoom = cam.get("zoom", camera.zoom)
     game.speed_index = data.get("speed_index", 0)
     game.paused = data.get("paused", False)
+    game.time_of_day = data.get("time_of_day", 0.35)
     game._ensure_depot()          # add the depot to saves that predate it
     return game

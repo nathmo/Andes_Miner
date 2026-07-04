@@ -18,6 +18,11 @@ SPEED_STEPS = [1.0, 2.0, 3.0]
 AUTOSAVE_INTERVAL = 90.0          # seconds between auto-saves
 SAVE_FILE = "andes_save.json"
 
+# Day/night: the sun rises and sets over DAY_LENGTH sim-seconds. Sun output (0 at
+# night, 1 at noon) both dims the world and scales Solar Array yield.
+DAY_LENGTH = 120.0
+NIGHT_MAX_ALPHA = 115            # deepest-night darkening overlay alpha
+
 # ------------------------------------------------------------------ hex geometry
 HEX_SIZE = 34                     # centre-to-vertex radius at zoom 1.0 (pointy-top)
 CHUNK_SIZE = 16                   # hexes per chunk edge (chunk = CHUNK_SIZE x CHUNK_SIZE)
