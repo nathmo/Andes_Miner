@@ -45,6 +45,14 @@ class Tile:
         return self.rockinfo[1]
 
     @property
+    def excavated_color(self):
+        """Dug-floor colour, tinted toward this rock so excavated andesite and
+        excavated basalt read differently. Shared with make_assets."""
+        base = self.rockinfo[1]
+        mix = tuple(int(0.55 * e + 0.45 * b) for e, b in zip(config.COL_EXCAVATED, base))
+        return tuple(int(c * 0.88) for c in mix)
+
+    @property
     def mine_time(self):
         return self.rockinfo[2]
 

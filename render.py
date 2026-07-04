@@ -113,10 +113,13 @@ class Renderer:
             if tile.state == ROAD:
                 key, fill = "tile_road", config.COL_ROAD
             elif tile.state == EXCAVATED:
-                key, fill = "tile_excavated", config.COL_EXCAVATED
+                # tinted per original rock so excavated andesite != excavated basalt
+                key, fill = "tile_excavated_" + tile.rock, tile.excavated_color
             else:
                 key, fill = "tile_rubble", config.COL_RUBBLE
             sprite = assets.get_sprite(key)
+            if sprite is None and tile.state == EXCAVATED:
+                sprite = assets.get_sprite("tile_excavated")   # generic fallback
             if sprite:
                 self._blit_tile(surface, key, sprite, cx, cy, hex_w)
             else:

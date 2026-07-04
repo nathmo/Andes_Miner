@@ -30,6 +30,12 @@ def _shade(c, m):
     return (min(255, int(c[0] * m)), min(255, int(c[1] * m)), min(255, int(c[2] * m)))
 
 
+def _excavated_fill(base):
+    """Dug-floor colour tinted toward a rock (mirror of Tile.excavated_color)."""
+    mix = tuple(int(0.55 * e + 0.45 * b) for e, b in zip(config.COL_EXCAVATED, base))
+    return _shade(mix, 0.88)
+
+
 def _save(surf, name):
     pygame.image.save(surf, os.path.join(ASSET_DIR, name + ".png"))
     print("wrote", name + ".png")
@@ -186,8 +192,11 @@ def main():
     for key, info in config.ROCK_TYPES.items():
         _save(rock_tile_sprite(info[1]), "tile_" + key)
     _save(floor_tile_sprite(config.COL_RUBBLE), "tile_rubble")
-    _save(floor_tile_sprite(config.COL_EXCAVATED), "tile_excavated")
+    _save(floor_tile_sprite(config.COL_EXCAVATED), "tile_excavated")   # generic fallback
     _save(floor_tile_sprite(config.COL_ROAD, road=True), "tile_road")
+    # One excavated floor per rock type, tinted so you can read what was dug.
+    for key, info in config.ROCK_TYPES.items():
+        _save(floor_tile_sprite(_excavated_fill(info[1])), "tile_excavated_" + key)
 
     _save(worker_sprite(), "worker")
     for key, info in config.VEHICLES.items():
