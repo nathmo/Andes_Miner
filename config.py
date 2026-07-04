@@ -339,10 +339,10 @@ WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it dri
 # Buy materials from the market: the metals (iron, copper) to unblock building
 # when you're mining-starved, plus silicon/lithium you can't make early. Buy price
 # sits above sell price (a spread). Higher-tier vehicles need some bought in.
-BUYABLE = ["iron", "copper", "silicon", "lithium"]
+BUYABLE = ["rubble", "iron", "copper", "silicon", "lithium"]
 BUY_BATCH = 3                     # units bought per click
 BUY_PRICES = {                   # base jammies per unit bought (item 23 makes it drift)
-    "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,
+    "rubble": 2, "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,
 }
 
 # ------------------------------------------------------------------ stock market
