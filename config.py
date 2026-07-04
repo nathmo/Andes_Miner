@@ -266,6 +266,7 @@ COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 # power; any shortfall is auto-bought from the grid. No cash -> machines stop.
 KWH_PRICE = 0.04                 # base jammies per kWh of grid power (drifts on the market)
 SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
+POWER_HISTORY = 64               # samples kept for the solar-production & consumption trends
 MACHINE_KWH_PER_OP = {           # energy (kWh) each machine uses per completed operation
     "oven": 6, "crusher": 2, "arc_furnace": 3,
     "silica_kiln": 8, "solar_foundry": 60, "electrolysis": 70, "battery_factory": 128,

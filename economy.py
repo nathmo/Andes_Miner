@@ -38,6 +38,10 @@ class Economy:
         self.emissions_rate = 0.0
         self.emissions_hist = [0.0]
 
+        # power trends (kW), sampled each market tick for the trend graphs
+        self.demand_hist = [0.0]         # electricity consumed (all running machines)
+        self.solar_hist = [0.0]          # electricity produced by Solar Arrays
+
         # stock market: per-resource price multiplier + recent price history
         self.price_mult = {res: 1.0 for res in TRADEABLE}
         self.price_hist = {res: [config.SELL_PRICES[res]] for res in TRADEABLE}
@@ -107,6 +111,13 @@ class Economy:
         self.emissions_hist.append(self.emissions_total)
         if len(self.emissions_hist) > config.EMISS_HISTORY:
             self.emissions_hist.pop(0)
+        # power production/consumption trends (values set by _allocate_power)
+        self.demand_hist.append(self.power_demand)
+        if len(self.demand_hist) > config.POWER_HISTORY:
+            self.demand_hist.pop(0)
+        self.solar_hist.append(self.solar_supply)
+        if len(self.solar_hist) > config.POWER_HISTORY:
+            self.solar_hist.pop(0)
 
     def buy(self, res, batch=None):
         """Buy `batch` units of a material with jammies. Returns units bought."""

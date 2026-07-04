@@ -209,7 +209,7 @@ class UI:
             return
         from economy import TRADEABLE
         econ = game.economy
-        pw, ph = 430, 44 + 18 * len(TRADEABLE) + 74
+        pw, ph = 430, 44 + 18 * len(TRADEABLE) + 124
         box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
@@ -255,6 +255,26 @@ class UI:
                                      f"(now {econ.emissions_rate:.1f}/s)", True, (210, 160, 140)),
                   (box.x + 14, y))
         self._sparkline(surf, econ.emissions_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), (210, 150, 120))
+        y += 18
+        # --- power: solar production + consumption trend (kW) -----------------
+        y += 6
+        pygame.draw.line(surf, config.COL_PANEL_EDGE, (box.x + 12, y), (box.right - 12, y))
+        y += 8
+        # solar arrays' output right now, with its trend
+        scol = (245, 205, 90)
+        pygame.draw.circle(surf, scol, (box.x + 22, y + 7), 5)
+        surf.blit(self.font_s.render("Solar output", True, config.COL_TEXT), (box.x + 34, y))
+        surf.blit(self.font_s.render(f"{econ.solar_supply:.1f} kW", True, config.COL_ACCENT),
+                  (box.x + 140, y))
+        self._sparkline(surf, econ.solar_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), scol)
+        y += 18
+        # total consumption of every running machine, trended over time
+        dcol = (150, 200, 230)
+        pygame.draw.circle(surf, dcol, (box.x + 22, y + 7), 5)
+        surf.blit(self.font_s.render("Consumption", True, config.COL_TEXT), (box.x + 34, y))
+        surf.blit(self.font_s.render(f"{econ.power_demand:.1f} kW", True, config.COL_ACCENT),
+                  (box.x + 140, y))
+        self._sparkline(surf, econ.demand_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), dcol)
         y += 18
 
     # ------------------------------------------------------------------ top bar
@@ -470,7 +490,7 @@ class UI:
         # energy status — the blue text, now AFTER the buttons so it never shifts them
         y += 6
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (x, y), (x + w, y)); y += 6
-        ptxt = f"Power {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f}"
+        ptxt = f"Load {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f} kW"
         surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 15
         bcol = (130, 205, 140) if econ.battery_capacity > 0 else config.COL_TEXT_DIM
         surf.blit(self.font_s.render(f"Battery {econ.battery_charge:.0f}/{econ.battery_capacity:.0f}",
