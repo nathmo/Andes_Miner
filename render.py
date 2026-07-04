@@ -67,7 +67,7 @@ class Renderer:
         size = cam.hex_pixel_size
         q_lo, q_hi, r_lo, r_hi = cam.visible_hex_box()
 
-        show_mine_hint = game.tool == "mine"
+        show_mine_hint = game.tool == "excavate"
 
         # Draw tiles back-to-front (increasing r = down the slope) for overlap.
         for r in range(r_lo, r_hi + 1):

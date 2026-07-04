@@ -52,7 +52,7 @@ class InputHandler:
                 ui.handle_click(pos, game)
                 return
             # clicking a building selects it (for the enable/disable panel)
-            if game.tool in ("mine", "select"):
+            if game.tool in ("excavate", "clean", "select"):
                 q, r = camera.screen_to_hex(*pos)
                 if game.world.get_tile(q, r).building is not None:
                     game.select_building_at(q, r)
@@ -60,7 +60,7 @@ class InputHandler:
                 game.selected_building = None
             if game.tool == "select":
                 self.pan_active = True
-            elif game.tool == "mine":
+            elif game.tool in ("excavate", "clean"):
                 self.box_start = pos
             elif game.tool in ("road", "build"):
                 q, r = camera.screen_to_hex(*pos)
@@ -138,8 +138,10 @@ class InputHandler:
             game.speed_index = 1; game.paused = False
         elif k in (pygame.K_3, pygame.K_KP3):
             game.speed_index = 2; game.paused = False
-        elif k == pygame.K_m:
-            game.tool = "mine"
+        elif k in (pygame.K_m, pygame.K_e):
+            game.tool = "excavate"
+        elif k == pygame.K_c:
+            game.tool = "clean"
         elif k == pygame.K_r:
             game.tool = "road"
         elif k == pygame.K_b:

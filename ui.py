@@ -375,23 +375,25 @@ class UI:
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (0, bar.y), (self.sw, bar.y))
 
         x = 10
-        for tool, label in [("mine", "Mine/Clean"), ("road", "Road"), ("build", "Build"), ("select", "Pan")]:
-            r = pygame.Rect(x, bar.y + 8, 108, 30)
+        # The three action tools the player orders, then Build and Pan.
+        for tool, label in [("excavate", "Excavate"), ("clean", "Clean"), ("road", "Road"),
+                            ("build", "Build"), ("select", "Pan")]:
+            r = pygame.Rect(x, bar.y + 8, 88, 30)
             self._button(surf, r, label, mouse, on=game.tool == tool)
             self._add(r, "tool", tool)
-            x += 114
+            x += 92
 
         # Home: recenter on HQ (so panning can't lose you).
-        rh = pygame.Rect(x, bar.y + 8, 72, 30)
+        rh = pygame.Rect(x, bar.y + 8, 64, 30)
         self._button(surf, rh, "Home", mouse)
         self._add(rh, "home")
-        x += 78
-        rm = pygame.Rect(x, bar.y + 8, 84, 30)
+        x += 70
+        rm = pygame.Rect(x, bar.y + 8, 80, 30)
         self._button(surf, rm, "Market", mouse, on=game.show_market)
         self._add(rm, "toggle_market")
-        x += 90
+        x += 88
 
-        help_txt = "LMB: act/mark  RMB: cancel  drag: box-mark  wheel: zoom  Space: pause  H: home  F5/F9: save/load"
+        help_txt = "LMB: mark  RMB: cancel  drag: box  wheel: zoom  M/C/R/B: tools  Space: pause  F5/F9: save/load"
         surf.blit(self.font_s.render(help_txt, True, config.COL_TEXT_DIM), (x + 6, bar.y + 16))
 
     # ------------------------------------------------------------------ tile info

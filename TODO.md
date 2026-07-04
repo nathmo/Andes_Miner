@@ -46,3 +46,5 @@ All items below are implemented (one commit each). Kept as a record.
 -> [x] Splashscreen: far zoom on the summit with slow clouds; title (Andes Mining Corp) + press space to start; SPACE zooms in to 0,0 and the game starts at x1.
 
 -> [x] side panel buttons ran off-screen: split it into Build / Fleet / Trade tabs (money+coffee always in the top bar; wheel scrolls a tab if it overflows).
+
+-> [x] split the combined Mine/Clean tool into three distinct action buttons — Excavate (rock), Clean (rubble), Road — in the bottom bar (shortcuts M/E, C, R).

@@ -37,7 +37,7 @@ class Game:
         self._reconcile_agents()
 
         # interaction state (driven by input.py)
-        self.tool = "mine"            # mine | road | build | select
+        self.tool = "excavate"        # excavate | clean | road | build | select
         self.build_choice = "workshop"
         self.hover_hex = None
         self.selection_rect = None
@@ -198,13 +198,14 @@ class Game:
         return reach
 
     def designate(self, q, r):
-        """Context-sensitive work order on a tile (the 'mine' tool)."""
+        """Work order on a tile, filtered by the active tool: the Excavate tool
+        marks solid rock for mining; the Clean tool marks rubble for clearing."""
         t = self.world.get_tile(q, r)
-        if t.state == ROCK:
+        if t.state == ROCK and self.tool != "clean":
             if self.world.mineable(t, self.max_mine_reach()) and not t.marked:
                 t.marked = True
                 self.jobs.add(MINE, q, r)
-        elif t.state == RUBBLE:
+        elif t.state == RUBBLE and self.tool != "excavate":
             if not self.jobs.has_job(q, r, CLEAN):
                 self.jobs.add(CLEAN, q, r)
 
@@ -227,12 +228,12 @@ class Game:
         far = []
         for (q, r) in cells:
             t = self.world.get_tile(q, r)
-            if t.state == ROCK:
+            if t.state == ROCK and self.tool != "clean":
                 if self.world.mineable(t, reach):
                     self.designate(q, r)
                 elif planner:
                     far.append((q, r))
-            elif t.state == RUBBLE:
+            elif t.state == RUBBLE and self.tool != "excavate":
                 self.designate(q, r)
         if not planner or not far:
             return

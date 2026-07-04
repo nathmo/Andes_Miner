@@ -22,12 +22,14 @@ slope. The map still connects: going "east" is a NE→SE zig-zag.
 Press **SPACE** at the summit splash to zoom in and start.
 
 ## Controls
-- **Mine/Clean tool** — LMB marks rock for mining (within your machines' reach of
-  a road); drag to box-mark many. With a **Mining Planner** built, box-selecting
-  ore beyond reach auto-plans the dig + road corridor out to it. On rubble it
-  orders a clean-up. RMB cancels.
-- **Road tool** — LMB (or drag) plans road on excavated tiles; a builder carries
-  rubble to the site and lays it.
+- **Excavate tool** (`M`) — LMB marks rock for mining (within your machines'
+  reach of a road); drag to box-mark many. With a **Mining Planner** built,
+  box-selecting ore beyond reach auto-plans the dig + road corridor out to it.
+  RMB cancels.
+- **Clean tool** (`C`) — LMB (or drag) marks rubble for clearing; a worker or
+  bulldozer hauls it off, leaving excavated floor. RMB cancels.
+- **Road tool** (`R`) — LMB (or drag) plans road on excavated tiles; a builder
+  carries rubble to the site and lays it.
 - **Right panel tabs** — the side panel is split into **Build** (place buildings),
   **Fleet** (manufacture vehicles, recruit workers), and **Trade** (buy coffee,
   sell/buy materials). Picking the Build tool jumps to the Build tab; the wheel
