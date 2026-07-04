@@ -78,8 +78,47 @@ class UI:
         self._draw_panel(surf, game, mouse)
         self._draw_bottombar(surf, game, mouse)
         self._draw_building_panel(surf, game, mouse)
+        self._draw_market_panel(surf, game, mouse)
         self._draw_tileinfo(surf, game)
         self._draw_messages(surf, game)
+
+    # ------------------------------------------------------------------ market panel
+    def _sparkline(self, surf, values, rect, col):
+        if len(values) < 2:
+            return
+        lo, hi = min(values), max(values)
+        rng = (hi - lo) or 1
+        n = len(values)
+        pts = [(rect.x + rect.w * i / (n - 1), rect.bottom - rect.h * (v - lo) / rng)
+               for i, v in enumerate(values)]
+        pygame.draw.lines(surf, col, False, pts, 1)
+
+    def _draw_market_panel(self, surf, game, mouse):
+        if not game.show_market:
+            return
+        from economy import TRADEABLE
+        econ = game.economy
+        pw, ph = 430, 44 + 18 * len(TRADEABLE)
+        box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
+        self._panels.append(box)
+        pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
+        pygame.draw.rect(surf, config.COL_ACCENT, box, 1, border_radius=8)
+        surf.blit(self.font_b.render("STOCK MARKET  (price + trend)", True, config.COL_TEXT),
+                  (box.x + 14, box.y + 10))
+        rc = pygame.Rect(box.right - 60, box.y + 8, 50, 22)
+        self._button(surf, rc, "Close", mouse)
+        self._add(rc, "close_market")
+        y = box.y + 38
+        for res in TRADEABLE:
+            col = config.RESOURCE_COLOR.get(res, config.COL_TEXT)
+            pygame.draw.circle(surf, col, (box.x + 22, y + 7), 5)
+            surf.blit(self.font_s.render(config.RESOURCE_LABEL.get(res, res), True, config.COL_TEXT),
+                      (box.x + 34, y))
+            surf.blit(self.font_s.render(f"{econ.sell_price(res)}j", True, config.COL_ACCENT),
+                      (box.x + 150, y))
+            self._sparkline(surf, econ.price_hist.get(res, []),
+                            pygame.Rect(box.x + 210, y - 1, 200, 15), col)
+            y += 18
 
     # ------------------------------------------------------------------ top bar
     def _draw_topbar(self, surf, game, mouse):
@@ -155,7 +194,7 @@ class UI:
                 continue
             r = pygame.Rect(x, y, w, 22)
             self._button(surf, r, f"Sell {config.RESOURCE_LABEL[res]}", mouse)
-            gain = config.SELL_PRICES.get(res, 0) * config.SELL_BATCH
+            gain = econ.sell_price(res) * config.SELL_BATCH
             surf.blit(self.font_s.render(f"+{gain}j", True, config.COL_TEXT_DIM),
                       (r.right - 42, r.y + 5))
             self._add(r, "sell", res)
@@ -222,8 +261,12 @@ class UI:
         self._button(surf, rh, "Home", mouse)
         self._add(rh, "home")
         x += 78
+        rm = pygame.Rect(x, bar.y + 8, 84, 30)
+        self._button(surf, rm, "Market", mouse, on=game.show_market)
+        self._add(rm, "toggle_market")
+        x += 90
 
-        help_txt = "LMB: act/mark  RMB: cancel  drag: box-mark  MMB/drag: pan  wheel: zoom  Space: pause  H: home  F5/F9: save/load"
+        help_txt = "LMB: act/mark  RMB: cancel  drag: box-mark  wheel: zoom  Space: pause  H: home  F5/F9: save/load"
         surf.blit(self.font_s.render(help_txt, True, config.COL_TEXT_DIM), (x + 6, bar.y + 16))
 
     # ------------------------------------------------------------------ tile info
@@ -356,6 +399,10 @@ class UI:
             game.buy_coffee()
         elif action == "buy_material":
             game.buy_material(arg)
+        elif action == "toggle_market":
+            game.show_market = not game.show_market
+        elif action == "close_market":
+            game.show_market = False
         elif action == "toggle_building":
             game.toggle_selected_building()
         elif action == "close_building":

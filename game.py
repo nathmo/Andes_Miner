@@ -40,6 +40,7 @@ class Game:
         self.build_choice = "workshop"
         self.hover_hex = None
         self.selection_rect = None
+        self.show_market = False      # stock-market panel toggle
 
         # time / speed
         self.speed_index = 0

@@ -271,6 +271,19 @@ WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it dri
 # above sell price (a spread). Higher-tier vehicles need some of these bought in.
 BUYABLE = ["silicon", "lithium"]
 BUY_BATCH = 3                     # units bought per click
-BUY_PRICES = {                   # jammies per unit bought
+BUY_PRICES = {                   # base jammies per unit bought (item 23 makes it drift)
     "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,
 }
+
+# ------------------------------------------------------------------ stock market
+# Prices drift: a random walk that mean-reverts to the base, plus a production
+# trend (selling a resource depresses its price, buying lifts it). A floor keeps
+# everything worth at least 1 jammy so you can always sell for coffee money.
+MARKET_TICK = 2.0                # seconds between price updates
+PRICE_MIN_MULT = 0.45           # floor multiplier on the base price
+PRICE_MAX_MULT = 2.2            # ceiling multiplier
+PRICE_DRIFT = 0.05              # random-walk step each market tick
+PRICE_REVERT = 0.03            # pull back toward the base each tick
+SELL_PRICE_IMPACT = 0.02       # price drop per unit you sell
+BUY_PRICE_IMPACT = 0.03        # price rise per unit you buy
+PRICE_HISTORY = 64             # samples kept per resource for the trend graph

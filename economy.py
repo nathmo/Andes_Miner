@@ -1,12 +1,18 @@
 """
-economy.py — the global stockpile and building processing.
+economy.py — the global stockpile, the stock market, and building processing.
 
 One shared inventory (like early-game Factorio). Buildings pull inputs from it
 and push outputs back on a timer. Inputs are consumed when a recipe starts and
-outputs delivered when it finishes, so nothing is double-spent.
+outputs delivered when it finishes, so nothing is double-spent. Prices drift on a
+small stock market (random walk + your production trend, floored) — see item 23.
 """
 
+import random
+
 import config
+
+# Everything with a sell price is tradeable and gets a drifting market price.
+TRADEABLE = list(config.SELL_PRICES.keys())
 
 
 class Economy:
@@ -21,6 +27,11 @@ class Economy:
         self.power_demand = 0.0         # power used this tick
         self.solar_supply = 0.0         # solar power available this tick
 
+        # stock market: per-resource price multiplier + recent price history
+        self.price_mult = {res: 1.0 for res in TRADEABLE}
+        self.price_hist = {res: [config.SELL_PRICES[res]] for res in TRADEABLE}
+        self._market_t = 0.0
+
     # ------------------------------------------------------------------ stockpile
     def amount(self, res):
         return self.inv.get(res, 0)
@@ -29,6 +40,14 @@ class Economy:
         self.inv[res] = self.inv.get(res, 0) + n
 
     # ------------------------------------------------------------------ market
+    def sell_price(self, res):
+        """Current per-unit sell price (base * market multiplier, floored at 1)."""
+        return max(1, round(config.SELL_PRICES.get(res, 0) * self.price_mult.get(res, 1.0)))
+
+    def buy_price(self, res):
+        """Current per-unit buy price (base * market multiplier, floored at 1)."""
+        return max(1, round(config.BUY_PRICES.get(res, 0) * self.price_mult.get(res, 1.0)))
+
     def sell(self, res, batch=None):
         """Sell up to `batch` units of a resource for jammies. Returns jammies earned."""
         batch = config.SELL_BATCH if batch is None else batch
@@ -36,26 +55,45 @@ class Economy:
         if amt <= 0:
             return 0
         self.inv[res] -= amt
-        gain = amt * config.SELL_PRICES.get(res, 0)
+        gain = amt * self.sell_price(res)
         self.jammies += gain
+        # flooding the market with a resource depresses its price
+        if res in self.price_mult:
+            self.price_mult[res] = max(config.PRICE_MIN_MULT,
+                                       self.price_mult[res] - amt * config.SELL_PRICE_IMPACT)
         return gain
+
+    def tick_market(self, dt):
+        """Random-walk each price toward/away from its base and log the trend."""
+        self._market_t += dt
+        if self._market_t < config.MARKET_TICK:
+            return
+        self._market_t = 0.0
+        for res in TRADEABLE:
+            m = self.price_mult[res]
+            m += random.uniform(-1.0, 1.0) * config.PRICE_DRIFT
+            m += (1.0 - m) * config.PRICE_REVERT          # mean-revert to base
+            self.price_mult[res] = max(config.PRICE_MIN_MULT, min(config.PRICE_MAX_MULT, m))
+            hist = self.price_hist[res]
+            hist.append(self.sell_price(res))
+            if len(hist) > config.PRICE_HISTORY:
+                hist.pop(0)
 
     def buy(self, res, batch=None):
         """Buy `batch` units of a material with jammies. Returns units bought."""
         batch = config.BUY_BATCH if batch is None else batch
-        price = config.BUY_PRICES.get(res)
-        if price is None:
+        if res not in config.BUY_PRICES:
             return 0
         cost = batch * self.buy_price(res)
         if self.jammies < cost:
             return 0
         self.jammies -= cost
         self.add(res, batch)
+        # buying pressure lifts the price
+        if res in self.price_mult:
+            self.price_mult[res] = min(config.PRICE_MAX_MULT,
+                                       self.price_mult[res] + batch * config.BUY_PRICE_IMPACT)
         return batch
-
-    def buy_price(self, res):
-        """Per-unit buy price (item 23 will make this drift)."""
-        return config.BUY_PRICES.get(res, 0)
 
     def buy_coffee(self, batch=None):
         """Buy iced coffee with jammies. Returns coffees bought (0 if too poor)."""
@@ -85,6 +123,7 @@ class Economy:
             b.obsolete = any(t in enabled_types
                              for t in config.OBSOLETED_BY.get(b.btype, []))
 
+        self.tick_market(dt)
         self._allocate_power(dt, buildings, sun)
 
         # Only powered buildings advance their recipe (no power -> paused).
