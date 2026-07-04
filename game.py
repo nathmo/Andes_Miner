@@ -59,6 +59,12 @@ class Game:
         self.villages_connected = 0
         self._last_road_count = -1
 
+        # warehouse auto-trade settings (item 28)
+        self.auto_cash_min = config.AUTO_CASH_MIN
+        self.auto_coffee_min = config.AUTO_COFFEE_MIN
+        self.auto_smart_sell = False     # upgrade: sell the most valuable stock
+        self._auto_t = 0.0
+
         # transient on-screen messages
         self.messages = []
         self._autosave_t = 0.0
@@ -142,6 +148,7 @@ class Game:
                 self.log("Wages paid — crew back to work")
             self.economy.update(sim_dt, self.buildings, self.sun)
             self._update_goal()
+            self._auto_trade(sim_dt)
         self._update_messages(real_dt)
         self._autosave_t += real_dt
 
@@ -336,6 +343,45 @@ class Game:
     # ------------------------------------------------------------------ economy actions
     def has_workshop(self):
         return any(b.built and b.btype == "workshop" for b in self.buildings)
+
+    def has_warehouse(self):
+        return any(b.built and b.btype == "warehouse" for b in self.buildings)
+
+    # ------------------------------------------------------------------ auto-trade
+    def _auto_trade(self, dt):
+        """With a Warehouse, keep coffee and cash above their thresholds: buy coffee
+        when low, and sell stock (fixed order, or the most valuable with the upgrade)
+        when cash is low, never dipping resources below their keep-reserve."""
+        if not self.has_warehouse():
+            return
+        self._auto_t += dt
+        if self._auto_t < config.AUTO_TRADE_INTERVAL:
+            return
+        self._auto_t = 0.0
+        econ = self.economy
+        if econ.coffee < self.auto_coffee_min and econ.jammies >= config.COFFEE_PRICE:
+            econ.buy_coffee(config.COFFEE_BATCH)
+        if econ.jammies < self.auto_cash_min:
+            res = self._auto_sell_pick()
+            if res:
+                econ.sell(res, config.SELL_BATCH)
+
+    def _auto_sell_pick(self):
+        econ = self.economy
+        if self.auto_smart_sell:                 # sell whatever is worth the most now
+            best, best_val = None, 0
+            for res in config.SELL_PRICES:
+                amt = econ.amount(res) - config.AUTO_SELL_KEEP.get(res, 0)
+                if amt <= 0:
+                    continue
+                val = amt * econ.sell_price(res)
+                if val > best_val:
+                    best, best_val = res, val
+            return best
+        for res in config.AUTO_SELL_FIXED:       # default: dump low-value surplus first
+            if econ.amount(res) - config.AUTO_SELL_KEEP.get(res, 0) > 0:
+                return res
+        return None
 
     def manufacture(self, vtype):
         if not self.has_workshop():

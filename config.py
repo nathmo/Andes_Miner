@@ -205,7 +205,17 @@ BUILDINGS = {
     "battery": dict(name="Grid Battery", cost={"battery_cell": 3, "iron": 4}, color=(90, 185, 110),
                         process=None, storage=True,
                         note="Stores surplus solar to run machines after dark"),
+    "warehouse": dict(name="Warehouse", cost={"iron": 6, "rubble": 8}, color=(170, 140, 95),
+                        process=None,
+                        note="Auto-sells to keep cash & coffee above set thresholds"),
 }
+
+# ------------------------------------------------------------------ warehouse auto-trade
+AUTO_CASH_MIN = 20               # warehouse tops cash up above this by selling
+AUTO_COFFEE_MIN = 5            # ...and keeps coffee above this by buying
+AUTO_TRADE_INTERVAL = 1.0     # seconds between auto-trade actions
+AUTO_SELL_FIXED = ["rubble", "iron_ore", "copper_ore", "sio2"]   # default sell order
+AUTO_SELL_KEEP = {"iron": 5, "copper": 5, "silicon": 2, "lithium": 2}  # never auto-sell below
 
 COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 

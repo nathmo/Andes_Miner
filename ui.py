@@ -355,7 +355,8 @@ class UI:
         b = game.selected_building
         if b is None:
             return
-        bw, bh = 250, 96
+        is_wh = b.built and b.btype == "warehouse"
+        bw, bh = 250, (190 if is_wh else 96)
         box = pygame.Rect(self.sw // 2 - bw // 2, self.sh - BOT_H - bh - 12, bw, bh)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL_LIGHT, box, border_radius=6)
@@ -374,11 +375,28 @@ class UI:
         note = config.BUILDINGS[b.btype].get("note", "")
         surf.blit(self.font_s.render(note[:40], True, config.COL_TEXT_DIM), (box.x + 10, box.y + 46))
 
+        if is_wh:                                # auto-trade threshold controls
+            wy = box.y + 66
+            surf.blit(self.font_s.render(f"Auto-sell if cash < {game.auto_cash_min}", True, config.COL_TEXT),
+                      (box.x + 10, wy + 3))
+            for lbl, act, rx in [("-", "wh_cash_dn", box.right - 60), ("+", "wh_cash_up", box.right - 34)]:
+                rb = pygame.Rect(rx, wy, 22, 20); self._button(surf, rb, lbl, mouse); self._add(rb, act)
+            wy += 26
+            surf.blit(self.font_s.render(f"Keep coffee > {game.auto_coffee_min}", True, config.COL_TEXT),
+                      (box.x + 10, wy + 3))
+            for lbl, act, rx in [("-", "wh_cof_dn", box.right - 60), ("+", "wh_cof_up", box.right - 34)]:
+                rb = pygame.Rect(rx, wy, 22, 20); self._button(surf, rb, lbl, mouse); self._add(rb, act)
+            wy += 26
+            rm = pygame.Rect(box.x + 10, wy, 230, 20)
+            self._button(surf, rm, f"Sell mode: {'Best value' if game.auto_smart_sell else 'Fixed order'}",
+                         mouse, on=game.auto_smart_sell)
+            self._add(rm, "wh_smart")
+
         if b.built:
-            rT = pygame.Rect(box.x + 10, box.bottom - 32, 150, 24)
+            rT = pygame.Rect(box.x + 10, box.bottom - 30, 150, 24)
             self._button(surf, rT, "Disable" if b.enabled else "Enable", mouse, on=not b.enabled)
             self._add(rT, "toggle_building")
-        rClose = pygame.Rect(box.right - 66, box.bottom - 32, 56, 24)
+        rClose = pygame.Rect(box.right - 66, box.bottom - 30, 56, 24)
         self._button(surf, rClose, "Close", mouse)
         self._add(rClose, "close_building")
 
@@ -437,3 +455,13 @@ class UI:
             game.toggle_selected_building()
         elif action == "close_building":
             game.selected_building = None
+        elif action == "wh_cash_dn":
+            game.auto_cash_min = max(0, game.auto_cash_min - 10)
+        elif action == "wh_cash_up":
+            game.auto_cash_min += 10
+        elif action == "wh_cof_dn":
+            game.auto_coffee_min = max(0, game.auto_coffee_min - 1)
+        elif action == "wh_cof_up":
+            game.auto_coffee_min += 1
+        elif action == "wh_smart":
+            game.auto_smart_sell = not game.auto_smart_sell

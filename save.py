@@ -51,6 +51,9 @@ def save_game(game, path=config.SAVE_FILE):
         "speed_index": game.speed_index,
         "paused": game.paused,
         "time_of_day": game.time_of_day,
+        "auto_cash_min": game.auto_cash_min,
+        "auto_coffee_min": game.auto_coffee_min,
+        "auto_smart_sell": game.auto_smart_sell,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -133,5 +136,8 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.speed_index = data.get("speed_index", 0)
     game.paused = data.get("paused", False)
     game.time_of_day = data.get("time_of_day", 0.35)
+    game.auto_cash_min = data.get("auto_cash_min", config.AUTO_CASH_MIN)
+    game.auto_coffee_min = data.get("auto_coffee_min", config.AUTO_COFFEE_MIN)
+    game.auto_smart_sell = data.get("auto_smart_sell", False)
     game._ensure_depot()          # add the depot to saves that predate it
     return game
