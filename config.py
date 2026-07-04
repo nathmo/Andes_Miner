@@ -45,6 +45,8 @@ COL_BUTTON_ON = (86, 132, 96)
 COL_ACCENT = (240, 200, 90)
 
 COL_MARK = (240, 90, 80)          # tile marked for mining
+COL_CLEAN_MARK = (110, 205, 235)  # rubble tile scheduled for cleaning
+COL_ROAD_MARK = (240, 205, 120)   # excavated tile scheduled for road building
 COL_MINEABLE = (240, 200, 90)     # subtle hint: markable rock in range
 COL_SELECT_RECT = (240, 220, 120)
 COL_PATH = (120, 200, 240)

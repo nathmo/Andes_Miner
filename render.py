@@ -7,12 +7,15 @@ recessed floor. Overlays: mine marks, mineable hints, ore drops, buildings,
 agents, selection rectangle, hover.
 """
 
+import math
+
 import pygame
 
 import config
 import hexgrid
 import assets
 from tiles import ROCK, RUBBLE, EXCAVATED, ROAD
+from jobs import CLEAN, BUILD_ROAD
 
 
 _SQRT3 = 3.0 ** 0.5
@@ -128,6 +131,23 @@ class Renderer:
             r = size * 0.28
             pygame.draw.line(surface, config.COL_MARK, (cx - r, cy - r), (cx + r, cy + r), 2)
             pygame.draw.line(surface, config.COL_MARK, (cx + r, cy - r), (cx - r, cy + r), 2)
+        # animated overlays for tiles queued to be cleaned / turned into road
+        elif tile.state == RUBBLE and game.jobs.has_job(tile.q, tile.r, CLEAN):
+            self._draw_scheduled(surface, c, cx, cy, size, config.COL_CLEAN_MARK, "clean")
+        elif tile.state == EXCAVATED and game.jobs.has_job(tile.q, tile.r, BUILD_ROAD):
+            self._draw_scheduled(surface, c, cx, cy, size, config.COL_ROAD_MARK, "road")
+
+    def _draw_scheduled(self, surface, c, cx, cy, size, col, kind):
+        """Pulsing overlay marking a tile queued for cleaning or road building."""
+        pulse = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.006)
+        pygame.draw.polygon(surface, col, c, max(2, int(size * (0.07 + 0.05 * pulse))))
+        if kind == "clean":
+            r = size * 0.30                        # a little sweep arc
+            rect = pygame.Rect(int(cx - r), int(cy - r), int(2 * r), int(2 * r))
+            pygame.draw.arc(surface, col, rect, 0.5, 2.7, max(2, int(size * 0.09)))
+        else:                                      # road preview centre line
+            pygame.draw.line(surface, col, (cx - size * 0.4, cy), (cx + size * 0.4, cy),
+                             max(2, int(size * 0.10)))
 
     # ------------------------------------------------------------------ drops
     def _draw_drops(self, surface, game, cam, size, q_lo, q_hi, r_lo, r_hi):
