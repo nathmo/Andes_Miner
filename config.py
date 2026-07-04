@@ -91,7 +91,8 @@ NOISE_OCTAVES = 3
 # ------------------------------------------------------------------ tiles / states
 # TileState values (see tiles.py). Passable states for pathfinding:
 PASSABLE_STATES = (1, 2, 3)       # RUBBLE, EXCAVATED, ROAD
-MINE_ROAD_RANGE = 2               # rock is mineable if a ROAD is within N walkable steps
+MINE_ROAD_RANGE = 2               # baseline reach (hand workers / small miner): road within N steps
+MAX_MINE_REACH = 4               # largest tier reach (mega); keeps far MINE jobs valid to claim
 
 # Terrain traversal speed multipliers, keyed by TileState int (RUBBLE=1,
 # EXCAVATED=2, ROAD=3). Roads speed everyone up; loose rubble slows them down.
@@ -124,19 +125,19 @@ RECRUIT_COST = {"iron": 2}       # cost to hire one more worker
 VEHICLES = {
     "transporter_s": dict(name="Small Transporter", tier="small", speed=95,  carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
                           cost={"iron": 2}, color=(90, 150, 220)),
-    "miner_s":       dict(name="Small Mining Machine", tier="small", speed=70, carry=0, mine_mult=3, clean_mult=0, jobs=("MINE",),
+    "miner_s":       dict(name="Small Mining Machine", tier="small", speed=70, carry=0, mine_mult=3, clean_mult=0, mine_reach=2, jobs=("MINE",),
                           cost={"iron": 3, "copper": 1}, color=(220, 150, 80)),
     "dozer_s":       dict(name="Small Bulldozer", tier="small", speed=80, carry=0, mine_mult=0, clean_mult=3, jobs=("CLEAN",),
                           cost={"iron": 2, "copper": 1}, color=(220, 200, 90)),
     "truck_m":       dict(name="Medium Truck", tier="medium", speed=115, carry=6, mine_mult=0, clean_mult=0, jobs=("HAUL",),
                           cost={"iron": 5, "copper": 2}, color=(70, 120, 200)),
-    "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=80, carry=0, mine_mult=6, clean_mult=0, jobs=("MINE",),
+    "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=80, carry=0, mine_mult=6, clean_mult=0, mine_reach=3, jobs=("MINE",),
                           cost={"iron": 6, "copper": 3}, color=(230, 130, 60)),
     "dozer_m":       dict(name="Medium Bulldozer", tier="medium", speed=100, carry=0, mine_mult=0, clean_mult=6, jobs=("CLEAN",),
                           cost={"iron": 5, "copper": 2}, color=(230, 210, 70)),
     "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=95, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
                           cost={"iron": 5, "copper": 2}, color=(140, 142, 150)),
-    "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=8, mine_mult=8, clean_mult=8, jobs=("MINE", "CLEAN", "HAUL"),
+    "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=8, mine_mult=8, clean_mult=8, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
                           cost={"iron": 15, "copper": 10}, color=(200, 90, 200)),
 }
 

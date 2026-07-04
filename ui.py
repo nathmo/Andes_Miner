@@ -220,8 +220,9 @@ class UI:
                 lines.append((f"Contains: {t.ore_type.title()} ore  (x{t.ore_amount})", oc))
             else:
                 lines.append(("Contains: no ore", config.COL_TEXT_DIM))
-            in_range = game.world.mineable(t)
-            lines.append(("In mining range" if in_range else "Needs road within 2 tiles",
+            reach = game.max_mine_reach()
+            in_range = game.world.mineable(t, reach)
+            lines.append(("In mining range" if in_range else f"Needs road within {reach} tiles",
                           (120, 210, 130) if in_range else (220, 150, 90)))
         for res, amt in t.drops.items():
             oc = config.RESOURCE_COLOR.get(res, config.COL_TEXT)

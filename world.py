@@ -93,9 +93,12 @@ class World:
             frontier = nxt
         return None
 
-    def mineable(self, tile):
-        """A solid rock is mineable if a ROAD lies within MINE_ROAD_RANGE
-        walkable steps through passable tiles (road -> [excavated] -> rock)."""
+    def mineable(self, tile, reach=None):
+        """A solid rock is mineable if a ROAD lies within `reach` walkable steps
+        through passable tiles (road -> [excavated] -> rock). Reach defaults to the
+        baseline MINE_ROAD_RANGE; higher-tier machines pass a larger reach."""
+        if reach is None:
+            reach = config.MINE_ROAD_RANGE
         if tile.state != ROCK:
             return False
         # The rock itself is a wall; check its passable walkable-neighbours.
@@ -104,7 +107,7 @@ class World:
             if nt.state == ROAD:
                 return True
             if nt.passable():
-                d = self.dist_to_road(nq, nr, config.MINE_ROAD_RANGE - 1)
+                d = self.dist_to_road(nq, nr, reach - 1)
                 if d is not None:
                     return True
         return False

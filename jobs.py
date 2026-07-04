@@ -8,6 +8,7 @@ agents never grab the same one, and briefly cooled-down if an agent can't reach
 them (e.g. no path yet).
 """
 
+import config
 import hexgrid
 
 MINE = "MINE"
@@ -93,6 +94,10 @@ class JobManager:
                     continue
                 if not self._still_valid(job):
                     continue
+                # only a machine whose reach covers this rock may take the mine job
+                if jtype == MINE and not self.world.mineable(
+                        self.world.get_tile(job.q, job.r), agent.mine_reach):
+                    continue
                 d = hexgrid.axial_distance(astart, job.pos)
                 if best_d is None or d < best_d:
                     best, best_d = job, d
@@ -110,7 +115,8 @@ class JobManager:
     def _still_valid(self, job):
         t = self.world.get_tile(job.q, job.r)
         if job.jtype == MINE:
-            return self.world.mineable(t)
+            # valid if any tier could reach it; per-agent reach is checked in claim()
+            return self.world.mineable(t, config.MAX_MINE_REACH)
         if job.jtype == CLEAN:
             return t.state == 1  # RUBBLE
         if job.jtype == BUILD_ROAD:

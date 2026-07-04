@@ -107,7 +107,7 @@ class Renderer:
                 pygame.draw.line(surface, (0, 0, 0), center, c[3], 1)
                 pygame.draw.polygon(surface, (0, 0, 0), c, 1)
 
-            if show_mine_hint and game.world.mineable(tile):
+            if show_mine_hint and game.world.mineable(tile, game.max_mine_reach()):
                 pygame.draw.polygon(surface, config.COL_MINEABLE, [c[5], c[0], c[1]], 2)
         else:
             if tile.state == ROAD:

@@ -144,11 +144,21 @@ class Game:
         return 0.0 if self.paused else config.SPEED_STEPS[self.speed_index]
 
     # ------------------------------------------------------------------ actions
+    def max_mine_reach(self):
+        """Largest mining reach available: hand workers plus any owned mining
+        machine (higher tiers reach farther from a road). Used to decide what the
+        player may mark; a job is then claimed only by a unit that can reach it."""
+        reach = config.MINE_ROAD_RANGE
+        for v in self.vehicles:
+            if MINE in config.VEHICLES[v.kind]["jobs"]:
+                reach = max(reach, config.VEHICLES[v.kind].get("mine_reach", config.MINE_ROAD_RANGE))
+        return reach
+
     def designate(self, q, r):
         """Context-sensitive work order on a tile (the 'mine' tool)."""
         t = self.world.get_tile(q, r)
         if t.state == ROCK:
-            if self.world.mineable(t) and not t.marked:
+            if self.world.mineable(t, self.max_mine_reach()) and not t.marked:
                 t.marked = True
                 self.jobs.add(MINE, q, r)
         elif t.state == RUBBLE:
@@ -170,11 +180,12 @@ class Game:
         dig+road corridor is planned from the road network to each such tile.
         Without one, only in-range rock is marked (rubble queued for cleaning)."""
         planner = self.has_planner()
+        reach = self.max_mine_reach()
         far = []
         for (q, r) in cells:
             t = self.world.get_tile(q, r)
             if t.state == ROCK:
-                if self.world.mineable(t):
+                if self.world.mineable(t, reach):
                     self.designate(q, r)
                 elif planner:
                     far.append((q, r))

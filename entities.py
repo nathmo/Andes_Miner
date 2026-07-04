@@ -29,6 +29,7 @@ class Agent:
             self.carry = config.WORKER_CARRY
             self.mine_mult = config.HAND_MINE_MULT
             self.clean_mult = 1.0
+            self.mine_reach = config.MINE_ROAD_RANGE
             self._jobs = set(WORKER_JOBS)
         else:
             v = config.VEHICLES[kind]
@@ -36,6 +37,7 @@ class Agent:
             self.carry = v["carry"]
             self.mine_mult = v["mine_mult"] or 1.0
             self.clean_mult = v["clean_mult"] or 1.0
+            self.mine_reach = v.get("mine_reach", config.MINE_ROAD_RANGE)
             self._jobs = set(v["jobs"])
 
         self.state = "IDLE"
