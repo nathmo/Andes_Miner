@@ -49,6 +49,10 @@ class Game:
         self.wages_due = False        # True while any worker is paused unpaid
         self.selected_building = None
 
+        # overarching goal: link villages to the road network
+        self.villages_connected = 0
+        self._last_road_count = -1
+
         # transient on-screen messages
         self.messages = []
         self._autosave_t = 0.0
@@ -124,8 +128,22 @@ class Game:
             elif was_striking and not self.wages_due:
                 self.log("Wages paid — crew back to work")
             self.economy.update(sim_dt, self.buildings)
+            self._update_goal()
         self._update_messages(real_dt)
         self._autosave_t += real_dt
+
+    # ------------------------------------------------------------------ goal
+    def _update_goal(self):
+        """Recount linked villages, but only when the road network changed."""
+        rc = len(self.world.road_tiles)
+        if rc == self._last_road_count:
+            return
+        self._last_road_count = rc
+        connected = sum(1 for (vq, vr) in self.world.villages
+                        if self.world.road_within(vq, vr, config.VILLAGE_CONNECT_RANGE))
+        if connected > self.villages_connected:
+            self.log(f"Village linked by road!  ({connected}/{len(self.world.villages)})")
+        self.villages_connected = connected
 
     # ------------------------------------------------------------------ salary
     def register_action(self, agent):

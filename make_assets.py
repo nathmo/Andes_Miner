@@ -165,6 +165,19 @@ def iced_coffee_fallback(px=128):
     return s
 
 
+def village_fallback(px=128):
+    """A little house cluster, used when no emoji font is available."""
+    s = pygame.Surface((px, px), pygame.SRCALPHA)
+    for (ox, oy, w) in [(0.16, 0.42, 0.34), (0.5, 0.5, 0.4)]:
+        bx, by, bw = int(px * ox), int(px * oy), int(px * w)
+        wall = pygame.Rect(bx, by, bw, int(px * 0.34))
+        pygame.draw.rect(s, (188, 170, 148), wall)
+        pygame.draw.rect(s, (90, 70, 55), wall, 2)
+        pygame.draw.polygon(s, (170, 80, 70),
+                            [(bx - 4, by), (bx + bw + 4, by), (bx + bw // 2, by - int(px * 0.18))])
+    return s
+
+
 def coin_sprite(col=(66, 132, 232), px=96):
     """A blue circular coin (jammies — the game's money)."""
     s = pygame.Surface((px, px), pygame.SRCALPHA)
@@ -207,6 +220,7 @@ def main():
     # HUD icons: iced coffee (worker wages) — emoji where available, else drawn.
     _save(emoji_sprite("\U0001F9CB") or iced_coffee_fallback(), "iced_coffee")
     _save(coin_sprite(), "jammies")                     # money
+    _save(emoji_sprite("\U0001F3D8") or village_fallback(), "village")   # goal outpost
 
     pygame.quit()
     print("Done. Edit the PNGs in ./assets and re-run the game to see changes.")

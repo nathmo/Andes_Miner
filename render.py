@@ -74,9 +74,10 @@ class Renderer:
                 cx, cy = cam.world_to_screen(wx, wy)
                 self._draw_tile(surface, tile, cx, cy, size, show_mine_hint, game)
 
-        # Cables (under buildings), then drops, buildings, agents on top.
+        # Cables (under buildings), then drops, buildings, villages, agents on top.
         self._draw_cables(surface, game, cam)
         self._draw_buildings(surface, game, cam, size)
+        self._draw_villages(surface, game, cam, size)
         self._draw_drops(surface, game, cam, size, q_lo, q_hi, r_lo, r_hi)
         self._draw_agents(surface, game, cam, size)
 
@@ -218,6 +219,22 @@ class Renderer:
                     if size > 12:
                         label = self.font.render(letter, True, (12, 12, 16))
                         surface.blit(label, label.get_rect(center=rect.center))
+
+    # ------------------------------------------------------------------ villages
+    def _draw_villages(self, surface, game, cam, size):
+        sprite = assets.get_sprite("village")
+        for (vq, vr) in game.world.villages:
+            wx, wy = hexgrid.hex_to_pixel(vq, vr, config.HEX_SIZE)
+            cx, cy = cam.world_to_screen(wx, wy)
+            if cx < -40 or cx > cam.screen_w + 40 or cy < -40 or cy > cam.screen_h + 40:
+                continue
+            linked = game.world.road_within(vq, vr, config.VILLAGE_CONNECT_RANGE)
+            ring = (120, 220, 130) if linked else (232, 200, 120)
+            if sprite:
+                self._blit_sprite(surface, "village", sprite, cx, cy - size * 0.2, size * 1.6)
+            else:
+                pygame.draw.circle(surface, (170, 140, 100), (int(cx), int(cy)), max(5, int(size * 0.4)))
+            pygame.draw.circle(surface, ring, (int(cx), int(cy)), max(7, int(size * 0.6)), 2)
 
     # ------------------------------------------------------------------ agents
     def _draw_agents(self, surface, game, cam, size):

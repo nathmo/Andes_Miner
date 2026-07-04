@@ -20,6 +20,7 @@ class World:
         self.modified = set()            # (q, r) of tiles that diverge from gen
         self.hq = (0, 0)                 # HQ tile (haul destination)
         self.road_tiles = set()          # cache of ROAD (q, r) for range checks
+        self.villages = worldgen.villages(seed)   # goal outposts to connect by road
         self._setup_start_area()
 
     # ------------------------------------------------------------------ chunks
@@ -92,6 +93,26 @@ class World:
                         nxt.append((nq, nr))
             frontier = nxt
         return None
+
+    def road_within(self, q, r, k):
+        """True if a ROAD lies within k walkable steps of (q, r), searching across
+        any tiles (so a road dug up next to a buried village still counts)."""
+        if (q, r) in self.road_tiles:
+            return True
+        frontier = [(q, r)]
+        seen = {(q, r)}
+        for _ in range(k):
+            nxt = []
+            for (cq, cr) in frontier:
+                for n in hexgrid.walkable_neighbors(cq, cr):
+                    if n in seen:
+                        continue
+                    seen.add(n)
+                    if self.get_tile(*n).state == ROAD:
+                        return True
+                    nxt.append(n)
+            frontier = nxt
+        return False
 
     def mineable(self, tile, reach=None):
         """A solid rock is mineable if a ROAD lies within `reach` walkable steps

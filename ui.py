@@ -99,9 +99,15 @@ class UI:
         # worker count (+ strike warning)
         wtxt = f"Workers:{game.num_workers} (foot {len(game.foot_workers)}/veh {game.active_vehicle_count})"
         surf.blit(self.font.render(wtxt, True, config.COL_ACCENT), (x, 11))
+        ox = x + self.font.size(wtxt)[0] + 24
         if game.wages_due:
-            x2 = x + self.font.size(wtxt)[0] + 12
-            surf.blit(self.font_b.render("ON STRIKE", True, (240, 110, 100)), (x2, 11))
+            surf.blit(self.font_b.render("ON STRIKE", True, (240, 110, 100)), (ox, 11))
+            ox += self.font.size("ON STRIKE")[0] + 16
+        # overarching goal: villages linked by road
+        vn = len(game.world.villages)
+        vtxt = f"Villages linked: {game.villages_connected}/{vn}"
+        vcol = (240, 200, 90) if game.villages_connected >= vn else (140, 210, 150)
+        surf.blit(self.font.render(vtxt, True, vcol), (ox, 11))
 
         # speed / pause on the right
         bx = self.sw - 4

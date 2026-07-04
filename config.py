@@ -75,6 +75,12 @@ ROCK_TYPES = {
 
 # ------------------------------------------------------------------ world gen
 WORLD_SEED = 1337                 # default seed (New Game can randomise via args)
+
+# Villages: the overarching goal is to connect these outposts to your road network.
+NUM_VILLAGES = 7
+VILLAGE_SPREAD_Q = 64            # lateral (E-W) scatter of village sites
+VILLAGE_SPREAD_R = 16            # vertical (up/down slope) scatter
+VILLAGE_CONNECT_RANGE = 2       # a road within N steps counts the village as linked
 # Base rock selection thresholds on fbm noise in [0,1]:
 #   n < GRANITE_T             -> granite
 #   GRANITE_T <= n < DIORITE_T-> diorite

@@ -69,3 +69,18 @@ def rock_at(q, r, seed):
     if base < config.DIORITE_T:
         return "diorite"
     return "andesite"
+
+
+def villages(seed, n=config.NUM_VILLAGES):
+    """Deterministic village sites, scattered widely across the slope (big lateral
+    spread) to reward exploring sideways. Pure function of the seed."""
+    out = []
+    for i in range(n):
+        hq = _hash01(i * 17 + 5, 3, seed + 5551)
+        hr = _hash01(2, i * 23 + 11, seed + 7777)
+        q = int(round((hq - 0.5) * config.VILLAGE_SPREAD_Q))
+        r = int(round((hr - 0.5) * config.VILLAGE_SPREAD_R))
+        if abs(q) + abs(r) < 9:                 # keep clear of the HQ start area
+            q += 14 if q >= 0 else -14
+        out.append((q, r))
+    return list(dict.fromkeys(out))             # dedupe, keep order
