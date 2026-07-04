@@ -130,7 +130,8 @@ class UI:
         # --- MARKET: money, salary coffee, sell held resources -----------------
         surf.blit(self.font_b.render("MARKET", True, config.COL_TEXT), (x, y)); y += 20
         mcol = (240, 120, 110) if game.wages_due else config.COL_ACCENT
-        surf.blit(self.font.render(f"Jammies:{econ.jammies}", True, config.COL_ACCENT), (x, y))
+        jw = self._icon(surf, "jammies", x, y - 2, 18)
+        surf.blit(self.font.render(f"{econ.jammies}", True, config.COL_ACCENT), (x + jw + 3, y))
         cw = self._icon(surf, "iced_coffee", x + 112, y - 2, 18)
         surf.blit(self.font.render(f"{econ.coffee}", True, mcol), (x + 112 + cw + 2, y)); y += 20
         rC = pygame.Rect(x, y, w, 26)

@@ -159,6 +159,23 @@ def iced_coffee_fallback(px=128):
     return s
 
 
+def coin_sprite(col=(66, 132, 232), px=96):
+    """A blue circular coin (jammies — the game's money)."""
+    s = pygame.Surface((px, px), pygame.SRCALPHA)
+    c = px // 2
+    r = int(px * 0.44)
+    pygame.draw.circle(s, _shade(col, 0.55), (c, c), r)                 # dark rim
+    pygame.draw.circle(s, col, (c, c), r - max(2, px // 28))            # face
+    pygame.draw.circle(s, _shade(col, 1.28), (c, c), int(r * 0.66))     # inner disk
+    d = int(r * 0.42)                                                   # centre gem
+    pts = [(c, c - d), (c + d, c), (c, c + d), (c - d, c)]
+    pygame.draw.polygon(s, _shade(col, 1.55), pts)
+    pygame.draw.polygon(s, _shade(col, 0.70), pts, 2)
+    pygame.draw.circle(s, (235, 242, 255), (int(c - r * 0.34), int(c - r * 0.34)),
+                       max(2, px // 16))                                # specular
+    return s
+
+
 def main():
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -180,6 +197,7 @@ def main():
 
     # HUD icons: iced coffee (worker wages) — emoji where available, else drawn.
     _save(emoji_sprite("\U0001F9CB") or iced_coffee_fallback(), "iced_coffee")
+    _save(coin_sprite(), "jammies")                     # money
 
     pygame.quit()
     print("Done. Edit the PNGs in ./assets and re-run the game to see changes.")
