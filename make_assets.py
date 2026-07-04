@@ -108,6 +108,57 @@ def building_sprite(col, letter):
     return s
 
 
+# Emoji fonts to try, in order, across the three desktop platforms.
+_EMOJI_FONTS = "segoe ui emoji,apple color emoji,noto color emoji"
+
+
+def _has_pixels(surf):
+    """True if the surface has a meaningful (non-empty, non-tofu) glyph."""
+    w, h = surf.get_size()
+    if w < 4 or h < 4:
+        return False
+    hits = 0
+    for y in range(0, h, 4):
+        for x in range(0, w, 4):
+            if surf.get_at((x, y))[3] > 24:
+                hits += 1
+    return hits > 6
+
+
+def emoji_sprite(chars, px=128):
+    """Render a color-emoji glyph to a square-ish PNG, or None if unavailable.
+
+    Uses the platform emoji font; foreground colour is ignored for colour
+    glyphs. The result is scaled to fit a `px` box, aspect preserved.
+    """
+    try:
+        font = pygame.font.SysFont(_EMOJI_FONTS, 96)
+        surf = font.render(chars, True, (255, 255, 255)).convert_alpha()
+    except Exception:
+        return None
+    if not _has_pixels(surf):
+        return None
+    w, h = surf.get_size()
+    scale = px / float(max(w, h))
+    return pygame.transform.smoothscale(surf, (max(1, int(w * scale)), max(1, int(h * scale))))
+
+
+def iced_coffee_fallback(px=128):
+    """Hand-drawn iced-coffee cup, used when no emoji font is available."""
+    s = pygame.Surface((px, px), pygame.SRCALPHA)
+    cup = pygame.Rect(int(px * 0.28), int(px * 0.24), int(px * 0.44), int(px * 0.62))
+    pygame.draw.rect(s, (225, 232, 240), cup, border_radius=6)           # clear cup
+    coffee = pygame.Rect(cup.x, int(px * 0.44), cup.w, int(px * 0.42))
+    pygame.draw.rect(s, (120, 78, 52), coffee, border_bottom_left_radius=6, border_bottom_right_radius=6)
+    for (ix, iy) in [(0.36, 0.5), (0.52, 0.58), (0.42, 0.66)]:           # ice cubes
+        r = pygame.Rect(int(px * ix), int(px * iy), int(px * 0.1), int(px * 0.1))
+        pygame.draw.rect(s, (205, 228, 240), r, border_radius=2)
+    pygame.draw.line(s, (230, 90, 110), (int(px * 0.6), int(px * 0.14)),
+                     (int(px * 0.5), int(px * 0.5)), max(2, px // 24))    # straw
+    pygame.draw.rect(s, (90, 60, 40), cup, 2, border_radius=6)
+    return s
+
+
 def main():
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -126,6 +177,9 @@ def main():
         _save(vehicle_sprite(info["color"]), key)
     for key, info in config.BUILDINGS.items():
         _save(building_sprite(info["color"], info["name"][0]), key)
+
+    # HUD icons: iced coffee (worker wages) — emoji where available, else drawn.
+    _save(emoji_sprite("\U0001F9CB") or iced_coffee_fallback(), "iced_coffee")
 
     pygame.quit()
     print("Done. Edit the PNGs in ./assets and re-run the game to see changes.")

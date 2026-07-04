@@ -7,6 +7,7 @@ clicks that land on a panel.
 
 import pygame
 import config
+import assets
 from tiles import STATE_NAME, ROCK
 
 
@@ -23,9 +24,27 @@ class UI:
         self.font_s = pygame.font.SysFont("consolas", 11)
         self.buttons = []
         self._panels = []
+        self._icons = {}        # (key, size) -> scaled Surface (or None if missing)
 
     def resize(self, w, h):
         self.sw, self.sh = w, h
+
+    # ------------------------------------------------------------------ icons
+    def _icon(self, surf, key, x, y, size=16):
+        """Blit a HUD icon sprite scaled into a `size` box; returns its width."""
+        ck = (key, size)
+        if ck not in self._icons:
+            sp = assets.get_sprite(key)
+            if sp is not None:
+                sc = size / float(max(sp.get_width(), sp.get_height()))
+                sp = pygame.transform.smoothscale(
+                    sp, (max(1, int(sp.get_width() * sc)), max(1, int(sp.get_height() * sc))))
+            self._icons[ck] = sp
+        ic = self._icons[ck]
+        if ic is not None:
+            surf.blit(ic, (x, y))
+            return ic.get_width()
+        return 0
 
     # ------------------------------------------------------------------ helpers
     def _button(self, surf, rect, label, mouse, on=False, enabled=True, sub=None):
@@ -112,10 +131,11 @@ class UI:
         surf.blit(self.font_b.render("MARKET", True, config.COL_TEXT), (x, y)); y += 20
         mcol = (240, 120, 110) if game.wages_due else config.COL_ACCENT
         surf.blit(self.font.render(f"Jammies:{econ.jammies}", True, config.COL_ACCENT), (x, y))
-        surf.blit(self.font.render(f"Coffee:{econ.coffee}", True, mcol), (x + 108, y)); y += 20
+        cw = self._icon(surf, "iced_coffee", x + 112, y - 2, 18)
+        surf.blit(self.font.render(f"{econ.coffee}", True, mcol), (x + 112 + cw + 2, y)); y += 20
         rC = pygame.Rect(x, y, w, 26)
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
-        self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Coffee", mouse,
+        self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,
                      enabled=econ.jammies >= ccost, sub=f"{ccost}j")
         self._add(rC, "buy_coffee"); y += 30
         for res in config.RESOURCES:
