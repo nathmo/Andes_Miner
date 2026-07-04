@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Save files (player data)
+andes_save.json
+*.save.json
+
+# pygbag / PyInstaller build output
+build/
+dist/
+*.spec
+
+# Editor / OS
+.DS_Store
+.claude/

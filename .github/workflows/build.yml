@@ -1,0 +1,136 @@
+name: Build desktop apps
+
+# Build a Windows .exe, a Linux .deb, and a macOS .app on every push. Pushing a
+# version tag (e.g. v1.0.0) additionally publishes the three artifacts to a
+# GitHub Release.
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows-exe
+          - os: ubuntu-latest
+            name: linux-deb
+          - os: macos-latest
+            name: macos-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Compute version
+        id: ver
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ---------------------------------------------------------------- Windows
+      - name: Build Windows .exe
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed \
+            --name Andes --add-data "assets;assets" main.py
+          mkdir -p out
+          cp dist/Andes.exe "out/Andes-windows-x64.exe"
+
+      # ------------------------------------------------------------------ macOS
+      - name: Build macOS .app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --clean --windowed \
+            --name Andes --add-data "assets:assets" main.py
+          mkdir -p out
+          # .app is a bundle (directory); ditto preserves it inside a zip.
+          ditto -c -k --keepParent "dist/Andes.app" "out/Andes-macos.zip"
+
+      # ------------------------------------------------------------------ Linux
+      - name: Build Linux .deb
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --clean --onefile \
+            --name andes --add-data "assets:assets" main.py
+          VERSION="${{ steps.ver.outputs.version }}"
+          PKG="andes_pkg"
+          mkdir -p "$PKG/DEBIAN" "$PKG/usr/bin" "$PKG/usr/share/applications"
+          cp dist/andes "$PKG/usr/bin/andes"
+          chmod 755 "$PKG/usr/bin/andes"
+          {
+            echo "Package: andes"
+            echo "Version: ${VERSION}"
+            echo "Section: games"
+            echo "Priority: optional"
+            echo "Architecture: amd64"
+            echo "Maintainer: nathmo <noreply@example.com>"
+            echo "Description: Andes - a chill hex mining game"
+            echo " A relaxed isometric hex mining game built with pygame-ce."
+          } > "$PKG/DEBIAN/control"
+          {
+            echo "[Desktop Entry]"
+            echo "Type=Application"
+            echo "Name=Andes"
+            echo "Comment=A chill hex mining game"
+            echo "Exec=/usr/bin/andes"
+            echo "Terminal=false"
+            echo "Categories=Game;"
+          } > "$PKG/usr/share/applications/andes.desktop"
+          mkdir -p out
+          dpkg-deb --build --root-owner-group "$PKG" "out/andes_${VERSION}_amd64.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: out/*
+          if-no-files-found: error
+
+  # Attach the three builds to a GitHub Release when a v* tag is pushed.
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            $(find artifacts -type f) \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

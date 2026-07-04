@@ -1,0 +1,25 @@
+Drop sprite PNGs here to replace the placeholder art. File name = the entity /
+tile key; assets.py picks them up automatically, and any missing file falls back
+to the code-drawn shape. Run `python make_assets.py` to (re)generate this whole
+starter set.
+
+UNITS & BUILDINGS (any size; drawn centred on the tile):
+  worker.png
+  transporter_s.png  miner_s.png  dozer_s.png
+  truck_m.png  excavator_m.png  dozer_m.png  mega.png
+  workshop.png  oven.png  crusher.png  arc_furnace.png
+
+TILES (must keep the pointy-top hex proportions or they won't line up):
+  tile_andesite.png  tile_diorite.png  tile_granite.png
+  tile_basalt.png    tile_rhyolite.png                 <- solid rock (iso cubes)
+  tile_rubble.png    tile_excavated.png  tile_road.png <- dug floor
+
+  Canvas ratio must be  W : H  =  sqrt(3) : 2  (e.g. 111 x 128).
+  The hexagon must fill the whole canvas edge-to-edge, pointy side up:
+      - top vertex   at (W/2, 0)
+      - bottom vertex at (W/2, H)
+      - left / right vertices at x=0 and x=W, y=H/2
+  Rock tiles read as a raised cube (light top face + two darker side faces);
+  the two VERTICAL edges (left & right) are the blocked E/W sides. Floor tiles
+  are a flat, darker recessed hex. The starter PNGs are exact templates — open
+  them to trace the shape.

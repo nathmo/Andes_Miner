@@ -1,0 +1,94 @@
+"""
+main.py — entry point and the async game loop (pygbag / web compatible).
+
+The loop is written `async` with an `await asyncio.sleep(0)` each frame so the
+exact same code runs natively (desktop) and compiled to WASM in the browser via
+pygbag. Real-time simulation is scaled by the player's speed multiplier; pause
+freezes the sim but keeps camera/UI responsive.
+"""
+
+import asyncio
+import pygame
+
+import config
+from camera import Camera
+from game import Game
+from render import Renderer
+from ui import UI
+from input import InputHandler
+import save as savemod
+
+
+async def main():
+    pygame.init()
+    pygame.display.set_caption(config.TITLE)
+    screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT), pygame.RESIZABLE)
+    clock = pygame.time.Clock()
+
+    camera = Camera(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
+    game = Game(seed=config.WORLD_SEED, camera=camera)
+    renderer = Renderer()
+    ui = UI(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
+    inp = InputHandler()
+
+    game.log("Mark rock near the road to start mining (Mine tool).")
+
+    running = True
+    while running:
+        dt = clock.tick(config.FPS) / 1000.0
+        dt = min(dt, 0.1)  # clamp after stalls
+
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.VIDEORESIZE:
+                screen = pygame.display.set_mode((e.w, e.h), pygame.RESIZABLE)
+                camera.resize(e.w, e.h)
+                ui.resize(e.w, e.h)
+        if inp.handle(events, game, ui, camera) == "quit":
+            running = False
+
+        camera.pan_keys(pygame.key.get_pressed(), dt)
+
+        sim_dt = dt * game.sim_multiplier()
+        game.update(sim_dt, dt)
+
+        # save / load requests
+        if game.want_save:
+            game.want_save = False
+            try:
+                savemod.save_game(game)
+                game.log("Game saved")
+            except Exception as ex:
+                game.log(f"Save failed: {ex}")
+        if game.want_load:
+            game.want_load = False
+            try:
+                loaded = savemod.load_game(camera=camera)
+                if loaded:
+                    game = loaded
+                    game.log("Game loaded")
+                else:
+                    game.log("No save file found")
+            except Exception as ex:
+                game.log(f"Load failed: {ex}")
+
+        # autosave
+        if game._autosave_t >= config.AUTOSAVE_INTERVAL:
+            game._autosave_t = 0.0
+            try:
+                savemod.save_game(game)
+                game.log("Auto-saved")
+            except Exception:
+                pass
+
+        renderer.draw(screen, game)
+        ui.draw(screen, game)
+        pygame.display.flip()
+
+        await asyncio.sleep(0)
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
