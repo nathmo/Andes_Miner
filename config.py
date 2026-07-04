@@ -33,13 +33,13 @@ NIGHT_MAX_ALPHA = 115            # deepest-night darkening overlay alpha
 # Clouds and condors are anchored to the WORLD, so they pan and zoom with the map
 # (not pinned to the screen). Clouds are an infinite lattice thinned by CLOUD_FILL;
 # birds are a few wandering instances spread over a world band around the camera.
-CLOUD_SPACING = 760.0            # world px between cloud lattice cells (bigger = sparser)
+CLOUD_SPACING = 640.0            # world px between cloud lattice cells (bigger = sparser)
 CLOUD_FILL = 0.6                 # fraction of lattice cells that hold a cloud
 CLOUD_DRIFT_PX = 6.0             # world px/sec the whole cloud field drifts sideways
-CLOUD_SCALE = 1.15               # cloud sprite size (world px per sprite px at zoom 1)
-SKY_BIRDS = 7                    # condor instances (kept low: sparse sky)
-SKY_SPAN_W = 3800.0             # world-px width of the bird wrap-band around the camera
-SKY_SPAN_H = 2400.0             # world-px height of the bird wrap-band
+CLOUD_SCALE = 1.2                # cloud sprite size (world px per sprite px at zoom 1)
+SKY_BIRDS = 6                    # condor instances (kept low: sparse sky)
+SKY_SPAN_W = 2400.0             # world-px width of the bird wrap-band around the camera
+SKY_SPAN_H = 1600.0             # world-px height of the bird wrap-band
 BIRD_DRIFT = 0.02               # bird travel, fraction of the span per second
 BIRD_SCALE = 1.0               # condor sprite size multiplier
 

@@ -201,20 +201,25 @@ def _blob(surf, center, rx, ry, col, alpha):
     surf.blit(tmp, (center[0] - rx, center[1] - ry))
 
 
-def cloud_sprite(kind=0, w=200, h=112):
+def cloud_sprite(kind=0, w=210, h=150):
     """Placeholder cloud: fluffy (kind 0, low) or wispy (kind 1, high altitude).
-    Semi-transparent so terrain shows through. Replace the PNG with real art."""
+    Semi-transparent so terrain shows through. Replace the PNG with real art.
+    Taller/puffier than a flat streak so it reads as a proper thick cloud."""
     s = pygame.Surface((w, h), pygame.SRCALPHA)
     if kind == 0:
-        for (fx, fy, fr) in [(.30, .58, .30), (.5, .48, .40), (.68, .58, .30),
-                             (.42, .66, .27), (.58, .66, .27)]:
+        # stacked blobs filling ~30%-90% of the height so it looks thick
+        for (fx, fy, fr) in [(.50, .50, .40),
+                             (.32, .58, .30), (.68, .58, .30),
+                             (.42, .40, .27), (.60, .40, .27),
+                             (.50, .70, .32),
+                             (.26, .62, .21), (.74, .62, .21)]:
             r = int(min(w, h) * fr)
-            _blob(s, (int(w * fx), int(h * fy)), r, r, (246, 248, 255), 66)
+            _blob(s, (int(w * fx), int(h * fy)), r, r, (248, 250, 255), 80)
     else:
-        for i in range(4):
-            yy = int(h * (0.40 + 0.11 * i))
-            _blob(s, (int(w * 0.5), yy), int(w * 0.42), max(3, int(h * 0.05)),
-                  (232, 238, 250), 40)
+        for i in range(5):
+            yy = int(h * (0.34 + 0.10 * i))
+            _blob(s, (int(w * 0.5), yy), int(w * 0.44), max(4, int(h * 0.07)),
+                  (234, 240, 250), 48)
     return s
 
 

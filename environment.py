@@ -100,8 +100,9 @@ class Environment:
                        alpha=255, flip=b["vx"] < 0, fallback="bird")
 
     def _blit(self, surface, sprite, sx, sy, sc, alpha=255, flip=False, fallback="cloud"):
-        # cull off-screen (with generous margin for big zoomed sprites)
-        m = 400
+        # cull off-screen with a margin just big enough for this (scaled) sprite
+        base = max(sprite.get_width(), sprite.get_height()) if sprite is not None else 120
+        m = int(base * sc * 0.5) + 4
         if sx < -m or sx > surface.get_width() + m or sy < -m or sy > surface.get_height() + m:
             return
         if sprite is not None:
