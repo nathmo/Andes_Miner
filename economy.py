@@ -40,6 +40,23 @@ class Economy:
         self.jammies += gain
         return gain
 
+    def buy(self, res, batch=None):
+        """Buy `batch` units of a material with jammies. Returns units bought."""
+        batch = config.BUY_BATCH if batch is None else batch
+        price = config.BUY_PRICES.get(res)
+        if price is None:
+            return 0
+        cost = batch * self.buy_price(res)
+        if self.jammies < cost:
+            return 0
+        self.jammies -= cost
+        self.add(res, batch)
+        return batch
+
+    def buy_price(self, res):
+        """Per-unit buy price (item 23 will make this drift)."""
+        return config.BUY_PRICES.get(res, 0)
+
     def buy_coffee(self, batch=None):
         """Buy iced coffee with jammies. Returns coffees bought (0 if too poor)."""
         batch = config.COFFEE_BATCH if batch is None else batch

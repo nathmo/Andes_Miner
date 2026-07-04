@@ -364,6 +364,13 @@ class Game:
         else:
             self.log("Not enough jammies for coffee")
 
+    def buy_material(self, res):
+        n = self.economy.buy(res, config.BUY_BATCH)
+        if n:
+            self.log(f"Bought {n} {config.RESOURCE_LABEL.get(res, res)}")
+        else:
+            self.log("Not enough jammies")
+
     # ------------------------------------------------------------------ building selection
     def select_building_at(self, q, r):
         t = self.world.get_tile(q, r)

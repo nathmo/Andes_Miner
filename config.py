@@ -141,15 +141,15 @@ VEHICLES = {
     "dozer_s":       dict(name="Small Bulldozer", tier="small", speed=72, carry=0, mine_mult=0, clean_mult=2.5, jobs=("CLEAN",),
                           cost={"iron": 2, "copper": 1}, color=(220, 200, 90)),
     "truck_m":       dict(name="Medium Truck", tier="medium", speed=105, carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
-                          cost={"iron": 6, "copper": 3}, color=(70, 120, 200)),
+                          cost={"iron": 6, "copper": 3, "silicon": 1}, color=(70, 120, 200)),
     "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=74, carry=0, mine_mult=4.5, clean_mult=0, mine_reach=3, jobs=("MINE",),
-                          cost={"iron": 9, "copper": 5}, color=(230, 130, 60)),
+                          cost={"iron": 9, "copper": 5, "silicon": 1}, color=(230, 130, 60)),
     "dozer_m":       dict(name="Medium Bulldozer", tier="medium", speed=90, carry=0, mine_mult=0, clean_mult=4.5, jobs=("CLEAN",),
-                          cost={"iron": 8, "copper": 4}, color=(230, 210, 70)),
+                          cost={"iron": 8, "copper": 4, "silicon": 1}, color=(230, 210, 70)),
     "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=88, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
-                          cost={"iron": 8, "copper": 4}, color=(140, 142, 150)),
+                          cost={"iron": 8, "copper": 4, "silicon": 1}, color=(140, 142, 150)),
     "mega":          dict(name="Mega Machine", tier="big", speed=92, carry=9, mine_mult=6, clean_mult=6, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
-                          cost={"iron": 30, "copper": 22}, color=(200, 90, 200)),
+                          cost={"iron": 30, "copper": 22, "silicon": 3, "lithium": 2}, color=(200, 90, 200)),
 }
 
 # ------------------------------------------------------------------ buildings
@@ -266,3 +266,11 @@ COFFEE_START = 20                 # iced coffees in stock at the start
 COFFEE_PRICE = 1                 # jammies per iced coffee
 COFFEE_BATCH = 3                 # coffees bought per click
 WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it drinks
+
+# Buy materials you can't easily make early (silicon, lithium). Buy price sits
+# above sell price (a spread). Higher-tier vehicles need some of these bought in.
+BUYABLE = ["silicon", "lithium"]
+BUY_BATCH = 3                     # units bought per click
+BUY_PRICES = {                   # jammies per unit bought
+    "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,
+}

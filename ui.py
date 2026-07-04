@@ -160,6 +160,16 @@ class UI:
                       (r.right - 42, r.y + 5))
             self._add(r, "sell", res)
             y += 24
+        # buy materials you can't make yet (silicon, lithium)
+        for res in config.BUYABLE:
+            price = int(econ.buy_price(res) * config.BUY_BATCH)
+            r = pygame.Rect(x, y, w, 22)
+            self._button(surf, r, f"Buy {config.RESOURCE_LABEL[res]}", mouse,
+                         enabled=econ.jammies >= price)
+            surf.blit(self.font_s.render(f"-{price}j", True, config.COL_TEXT_DIM),
+                      (r.right - 46, r.y + 5))
+            self._add(r, "buy_material", res)
+            y += 24
         y += 6
 
         # --- BUILD -------------------------------------------------------------
@@ -344,6 +354,8 @@ class UI:
             game.sell(arg)
         elif action == "buy_coffee":
             game.buy_coffee()
+        elif action == "buy_material":
+            game.buy_material(arg)
         elif action == "toggle_building":
             game.toggle_selected_building()
         elif action == "close_building":
