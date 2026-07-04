@@ -8,6 +8,8 @@ count; each vehicle needs one worker to crew it, and any spare workers do jobs
 on foot. So building vehicles trades hand-labour for faster specialised units.
 """
 
+import heapq
+
 import config
 import hexgrid
 from world import World
@@ -157,6 +159,94 @@ class Game:
         t = self.world.get_tile(q, r)
         t.marked = False
         self.jobs.cancel_at(q, r)
+
+    # ------------------------------------------------------------------ auto-planner
+    def has_planner(self):
+        return any(b.built and b.btype == "planner" for b in self.buildings)
+
+    def box_designate(self, cells):
+        """Designate a batch of tiles (single click or drag-box). With a built
+        Mining Planner, rock out of road range is reached automatically: a
+        dig+road corridor is planned from the road network to each such tile.
+        Without one, only in-range rock is marked (rubble queued for cleaning)."""
+        planner = self.has_planner()
+        far = []
+        for (q, r) in cells:
+            t = self.world.get_tile(q, r)
+            if t.state == ROCK:
+                if self.world.mineable(t):
+                    self.designate(q, r)
+                elif planner:
+                    far.append((q, r))
+            elif t.state == RUBBLE:
+                self.designate(q, r)
+        if not planner or not far:
+            return
+        far.sort(key=lambda c: hexgrid.axial_distance(c, self.world.hq))
+        cap = config.PLAN_MAX_ROUTES
+        planned = sum(1 for tgt in far[:cap] if self._plan_route(tgt))
+        if planned:
+            msg = f"Planner: routing to {planned} ore tile(s)"
+            if len(far) > cap:
+                msg += f" (+{len(far) - cap} not planned this pass)"
+            self.log(msg)
+
+    def _plan_route(self, target):
+        """Dijkstra from `target` back to the nearest road — cheap across passable
+        tiles, costly through rock — then queue the dig+road corridor and mark the
+        target for mining. Job validity gates the order, so the road creeps out and
+        each newly-reachable rock is mined in turn. Returns True if a route queued."""
+        road = self.world.road_tiles
+        dist = {target: 0.0}
+        came = {target: None}
+        heap = [(0.0, target)]
+        goal = None
+        expanded = 0
+        while heap:
+            d, cur = heapq.heappop(heap)
+            if d > dist.get(cur, 1e18):
+                continue
+            if cur in road and cur != target:
+                goal = cur
+                break
+            expanded += 1
+            if expanded > config.PLAN_MAX_EXPAND:
+                break
+            for n in hexgrid.walkable_neighbors(*cur):
+                t = self.world.get_tile(*n)
+                step = 0.2 if t.passable() else 1.0
+                nd = d + step
+                if nd < dist.get(n, 1e18):
+                    dist[n] = nd
+                    came[n] = cur
+                    heapq.heappush(heap, (nd, n))
+        if goal is None:
+            return False
+        node, route = goal, []
+        while node is not None:
+            route.append(node)
+            node = came[node]
+        # route = [road tile, ..., target]; road the in-between, mine the target
+        for (q, r) in route[1:-1]:
+            self._queue_path_tile(q, r)
+        tt = self.world.get_tile(*target)
+        if tt.state == ROCK and not tt.marked:
+            tt.marked = True
+            self.jobs.add(MINE, *target)
+        return True
+
+    def _queue_path_tile(self, q, r):
+        """Queue whatever turns tile (q, r) into road: mine/clean as needed, then
+        the road itself (each job waits on the tile's state via job validity)."""
+        t = self.world.get_tile(q, r)
+        if t.state == ROAD:
+            return
+        if t.state == ROCK:
+            t.marked = True
+            self.jobs.add(MINE, q, r)      # -> rubble, auto-clean -> excavated
+        elif t.state == RUBBLE:
+            self.jobs.add(CLEAN, q, r)
+        self.jobs.add(BUILD_ROAD, q, r)    # valid once the tile is excavated
 
     def can_place_here(self, q, r):
         t = self.world.get_tile(q, r)

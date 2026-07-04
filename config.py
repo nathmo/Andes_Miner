@@ -165,7 +165,15 @@ BUILDINGS = {
                             dict(inp={"iron_ore": 1}, out={"iron": 1}, time=4.0),
                             dict(inp={"copper_ore": 1}, out={"copper": 1}, time=4.0),
                         ], note="Crushed (or raw) ore -> metal, double yield"),
+    "planner":     dict(name="Mining Planner", cost={"iron": 6, "copper": 4}, color=(88, 158, 168),
+                        process=None, note="Drag-select ore: auto-mines and auto-roads out to reach it"),
 }
+
+# ------------------------------------------------------------------ auto-planner
+# With a built Mining Planner, box-selecting rock also plans dig+road corridors
+# out to ore beyond road range. Caps keep a huge selection from stalling a frame.
+PLAN_MAX_ROUTES = 40             # corridors planned per box-select
+PLAN_MAX_EXPAND = 2500           # Dijkstra node budget per corridor
 
 # A building type is auto-disabled ("obsolete") while any of these built+enabled
 # types exist, so ore isn't wasted in the poor-yield oven once you have the arc

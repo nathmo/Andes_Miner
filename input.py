@@ -85,7 +85,7 @@ class InputHandler:
                 if abs(x1 - x0) < 5 and abs(y1 - y0) < 5:
                     if not ui.point_in_ui(e.pos):
                         q, r = camera.screen_to_hex(x1, y1)
-                        game.designate(q, r)
+                        game.box_designate([(q, r)])
                 else:
                     self._box_designate(game, camera, (x0, y0), (x1, y1))
                 self.box_start = None
@@ -115,12 +115,14 @@ class InputHandler:
         for (sx, sy) in corners:
             q, r = camera.screen_to_hex(sx, sy)
             qs.append(q); rs.append(r)
+        cells = []
         for r in range(min(rs) - 1, max(rs) + 2):
             for q in range(min(qs) - 1, max(qs) + 2):
                 wx, wy = hexgrid.hex_to_pixel(q, r, config.HEX_SIZE)
                 sx, sy = camera.world_to_screen(wx, wy)
                 if rect.collidepoint(sx, sy):
-                    game.designate(q, r)
+                    cells.append((q, r))
+        game.box_designate(cells)
 
     # ------------------------------------------------------------------ keyboard
     def _key(self, e, game):
