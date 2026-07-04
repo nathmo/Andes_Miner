@@ -56,7 +56,7 @@ class Environment:
             b["x"] = (b["x"] + b["vx"] * dt) % 1.0
 
     # ------------------------------------------------------------------ draw
-    def draw(self, surface, cam):
+    def draw(self, surface, cam, show_clouds=True, show_birds=True):
         w, h = cam.screen_w, cam.screen_h
         # altitude in view: row at screen centre (higher row = lower on the slope)
         row = cam.y / _SPRITE_H
@@ -64,17 +64,19 @@ class Environment:
         high = 1.0 - ground
 
         # cloud type shifts wispy as you climb; fluffy low down
-        ckey = "cloud_1" if high > 0.55 else "cloud_0"
-        cloud = assets.get_sprite(ckey)
-        for c in self.clouds:
-            self._blit_cloud(surface, cloud, c, w, h, high)
+        if show_clouds:
+            ckey = "cloud_1" if high > 0.55 else "cloud_0"
+            cloud = assets.get_sprite(ckey)
+            for c in self.clouds:
+                self._blit_cloud(surface, cloud, c, w, h, high)
 
         # more birds toward the ground, fewer up high
-        nb = int(len(self.birds) * (0.12 + 0.88 * ground))
-        frame = int(self.t * 5) % 3
-        bird = assets.get_sprite(f"bird_{frame}")
-        for b in self.birds[:nb]:
-            self._blit_bird(surface, bird, b, w, h)
+        if show_birds:
+            nb = int(len(self.birds) * (0.12 + 0.88 * ground))
+            frame = int(self.t * 5) % 3
+            bird = assets.get_sprite(f"bird_{frame}")
+            for b in self.birds[:nb]:
+                self._blit_bird(surface, bird, b, w, h)
 
     def _blit_cloud(self, surface, sprite, c, w, h, high):
         px, py = int(c["x"] * w), int(c["y"] * h)

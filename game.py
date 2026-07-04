@@ -42,6 +42,11 @@ class Game:
         self.hover_hex = None
         self.selection_rect = None
         self.show_market = False      # stock-market panel toggle
+        self.show_settings = False    # settings menu toggle
+
+        # display preferences (settings menu)
+        self.show_clouds = True       # drifting clouds in the sky
+        self.show_birds = True        # circling condors
 
         # time / speed
         self.speed_index = 0

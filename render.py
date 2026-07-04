@@ -190,13 +190,15 @@ class Renderer:
                     pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
 
     def _draw_sky(self, surface, game, cam):
+        if not (game.show_clouds or game.show_birds):
+            return
         if self.env is None:
             self.env = Environment(game.world.seed)
         now = pygame.time.get_ticks()
         dt = 0.0 if self._last_ticks is None else (now - self._last_ticks) / 1000.0
         self._last_ticks = now
         self.env.update(dt, cam)
-        self.env.draw(surface, cam)
+        self.env.draw(surface, cam, show_clouds=game.show_clouds, show_birds=game.show_birds)
 
     def _night_overlay(self, size, alpha):
         """Cached dark-blue overlay used to dim the world at night."""

@@ -90,6 +90,7 @@ class UI:
         self._draw_bottombar(surf, game, mouse)
         self._draw_building_panel(surf, game, mouse)
         self._draw_market_panel(surf, game, mouse)
+        self._draw_settings_menu(surf, game, mouse)
         self._draw_load_menu(surf, game, mouse)
         self._draw_tileinfo(surf, game)
         self._draw_messages(surf, game)
@@ -118,6 +119,31 @@ class UI:
             if exists:
                 self._add(r, "load_slot", path)
             y += 26
+
+    # ------------------------------------------------------------------ settings menu
+    def _draw_settings_menu(self, surf, game, mouse):
+        if not game.show_settings:
+            return
+        rows = [
+            ("Clouds", "toggle_clouds", game.show_clouds),
+            ("Condors (birds)", "toggle_birds", game.show_birds),
+        ]
+        pw, ph = 300, 52 + 30 * len(rows)
+        box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
+        self._panels.append(box)
+        pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
+        pygame.draw.rect(surf, config.COL_ACCENT, box, 1, border_radius=8)
+        surf.blit(self.font_b.render("SETTINGS", True, config.COL_TEXT), (box.x + 14, box.y + 10))
+        rc = pygame.Rect(box.right - 60, box.y + 8, 50, 22)
+        self._button(surf, rc, "Close", mouse)
+        self._add(rc, "close_settings")
+        y = box.y + 42
+        for (label, act, on) in rows:
+            surf.blit(self.font.render(label, True, config.COL_TEXT), (box.x + 16, y + 3))
+            rb = pygame.Rect(box.right - 84, y, 68, 24)
+            self._button(surf, rb, "On" if on else "Off", mouse, on=on)
+            self._add(rb, act)
+            y += 30
 
     # ------------------------------------------------------------------ market panel
     def _sparkline(self, surf, values, rect, col):
@@ -375,9 +401,10 @@ class UI:
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (0, bar.y), (self.sw, bar.y))
 
         x = 10
-        # The three action tools the player orders, then Build and Pan.
-        for tool, label in [("excavate", "Excavate"), ("clean", "Clean"), ("road", "Road"),
-                            ("build", "Build"), ("select", "Pan")]:
+        # The three action tools the player orders, then Pan. (Building is placed
+        # from the Build tab in the side panel, so no Build button here.)
+        for tool, label in [("excavate", "Excavate"), ("clean", "Clean"),
+                            ("road", "Road"), ("select", "Pan")]:
             r = pygame.Rect(x, bar.y + 8, 88, 30)
             self._button(surf, r, label, mouse, on=game.tool == tool)
             self._add(r, "tool", tool)
@@ -388,12 +415,16 @@ class UI:
         self._button(surf, rh, "Home", mouse)
         self._add(rh, "home")
         x += 70
-        rm = pygame.Rect(x, bar.y + 8, 80, 30)
+        rm = pygame.Rect(x, bar.y + 8, 76, 30)
         self._button(surf, rm, "Market", mouse, on=game.show_market)
         self._add(rm, "toggle_market")
-        x += 88
+        x += 82
+        rs = pygame.Rect(x, bar.y + 8, 80, 30)
+        self._button(surf, rs, "Settings", mouse, on=game.show_settings)
+        self._add(rs, "toggle_settings")
+        x += 86
 
-        help_txt = "LMB: mark  RMB: cancel  drag: box  wheel: zoom  M/C/R/B: tools  Space: pause  F5/F9: save/load"
+        help_txt = "LMB: mark  RMB: cancel  drag: box  wheel: zoom  M/C/R: tools  Space: pause  F5/F9: save/load"
         surf.blit(self.font_s.render(help_txt, True, config.COL_TEXT_DIM), (x + 6, bar.y + 16))
 
     # ------------------------------------------------------------------ tile info
@@ -509,7 +540,7 @@ class UI:
 
     # ------------------------------------------------------------------ interaction
     def _cost_str(self, cost):
-        return " ".join(f"{v}{k[:2].title()}" for k, v in cost.items())
+        return " ".join(f"{v}{config.RESOURCE_ABBR.get(k, k[:2].title())}" for k, v in cost.items())
 
     def point_in_ui(self, pos):
         return any(p.collidepoint(pos) for p in self._panels)
@@ -561,6 +592,14 @@ class UI:
             game.show_market = not game.show_market
         elif action == "close_market":
             game.show_market = False
+        elif action == "toggle_settings":
+            game.show_settings = not game.show_settings
+        elif action == "close_settings":
+            game.show_settings = False
+        elif action == "toggle_clouds":
+            game.show_clouds = not game.show_clouds
+        elif action == "toggle_birds":
+            game.show_birds = not game.show_birds
         elif action == "toggle_building":
             game.toggle_selected_building()
         elif action == "close_building":

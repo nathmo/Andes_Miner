@@ -94,9 +94,10 @@ ROCK_TYPES = {
 WORLD_SEED = 1337                 # default seed (New Game can randomise via args)
 
 # Villages: the overarching goal is to connect these outposts to your road network.
+# Spread wide so they sit far apart (quadrupled) — connecting one is a real trek.
 NUM_VILLAGES = 7
-VILLAGE_SPREAD_Q = 64            # lateral (E-W) scatter of village sites
-VILLAGE_SPREAD_R = 16            # vertical (up/down slope) scatter
+VILLAGE_SPREAD_Q = 256           # lateral (E-W) scatter of village sites
+VILLAGE_SPREAD_R = 64            # vertical (up/down slope) scatter
 VILLAGE_CONNECT_RANGE = 2       # a road within N steps counts the village as linked
 # Base rock selection thresholds on fbm noise in [0,1]:
 #   n < GRANITE_T             -> granite
@@ -277,6 +278,14 @@ RESOURCE_LABEL = {
     "lithium_salt": "Li salt", "lithium": "Lithium",
     "solar_panel": "Solar", "battery_cell": "Battery",
 }
+# Short symbols for tight cost strings (e.g. "5Fe 3Cu"). Iron/copper use their
+# chemical symbols (Fe/Cu); anything missing falls back to its first two letters.
+RESOURCE_ABBR = {
+    "rubble": "Ru", "iron_ore": "FeO", "copper_ore": "CuO",
+    "iron_crushed": "FeX", "copper_crushed": "CuX",
+    "iron": "Fe", "copper": "Cu", "sio2": "SiO", "silicon": "Si",
+    "lithium_salt": "LiS", "lithium": "Li", "solar_panel": "Sp", "battery_cell": "Bc",
+}
 RESOURCE_COLOR = {
     "rubble": (150, 140, 128),
     "iron_ore": COL_ORE_IRON, "copper_ore": COL_ORE_COPPER,
@@ -309,9 +318,10 @@ COFFEE_PRICE = 1                 # jammies per iced coffee
 COFFEE_BATCH = 3                 # coffees bought per click
 WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it drinks
 
-# Buy materials you can't easily make early (silicon, lithium). Buy price sits
-# above sell price (a spread). Higher-tier vehicles need some of these bought in.
-BUYABLE = ["silicon", "lithium"]
+# Buy materials from the market: the metals (iron, copper) to unblock building
+# when you're mining-starved, plus silicon/lithium you can't make early. Buy price
+# sits above sell price (a spread). Higher-tier vehicles need some bought in.
+BUYABLE = ["iron", "copper", "silicon", "lithium"]
 BUY_BATCH = 3                     # units bought per click
 BUY_PRICES = {                   # base jammies per unit bought (item 23 makes it drift)
     "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,

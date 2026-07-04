@@ -35,8 +35,10 @@ Press **SPACE** at the summit splash to zoom in and start.
   sell/buy materials). Picking the Build tool jumps to the Build tab; the wheel
   scrolls a tab if its list is taller than the panel. Your jammies and coffee
   always show in the top bar.
-- **Build tool** — pick a building on the Build tab, LMB to place it.
+- **Build** — pick a building on the Build tab and LMB to place it (no separate
+  Build button in the bottom bar; the Build tab drives it).
 - **Market button** — live prices, trend sparklines, grid carbon + emissions graph.
+- **Settings button** — toggle sky ambiance (clouds, condors) on or off.
 - **Pan tool / MMB / drag** — pan. **WASD / arrows** also pan. **Wheel** zooms.
 - **Home button / H** — recenter the view on HQ so panning can't lose you.
 - **Hover any tile** — the info box names it (e.g. "Diorite rubble", "Excavated
@@ -68,10 +70,11 @@ auto-stops so ore isn't wasted (you can force it back on from its panel).
 - **Goal.** Villages are scattered across the slope; the objective is to reach and
   link each one to your road network (top bar tracks progress), rewarding lateral
   exploration.
-- **Market.** Sell any resource for jammies and buy materials you can't yet make
-  (silicon, lithium — needed for the better machines). Prices drift on a small
-  stock market: your own trading and a random walk move them, floored so you can
-  always raise coffee money.
+- **Market.** Sell any resource for jammies and buy materials from the **Trade**
+  tab — the metals **iron** and **copper** to unblock building when you're
+  mining-starved, plus **silicon** and **lithium** you can't make early (needed
+  for the better machines). Prices drift on a small stock market: your own trading
+  and a random walk move them, floored so you can always raise coffee money.
 - **Energy.** Machines draw power. Buy it from the grid (auto, with jammies) or
   build **Solar Arrays** — a full material chain runs rubble → SiO2 → solar panels,
   and lithium (from spodumene via an Electrolysis Plant) feeds **Battery Factories**

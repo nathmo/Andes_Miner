@@ -84,6 +84,8 @@ def save_game(game, path=config.SAVE_FILE):
         "auto_coffee_min": game.auto_coffee_min,
         "auto_smart_sell": game.auto_smart_sell,
         "backup_step": game._backup_step,
+        "show_clouds": game.show_clouds,
+        "show_birds": game.show_birds,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -170,5 +172,7 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.auto_coffee_min = data.get("auto_coffee_min", config.AUTO_COFFEE_MIN)
     game.auto_smart_sell = data.get("auto_smart_sell", False)
     game._backup_step = data.get("backup_step", 0)
+    game.show_clouds = data.get("show_clouds", True)
+    game.show_birds = data.get("show_birds", True)
     game._ensure_depot()          # add the depot to saves that predate it
     return game
