@@ -7,6 +7,7 @@ pygbag. Real-time simulation is scaled by the player's speed multiplier; pause
 freezes the sim but keeps camera/UI responsive.
 """
 
+import sys
 import asyncio
 import pygame
 
@@ -20,17 +21,34 @@ from splash import Splash
 import save as savemod
 
 
+def _enable_dpi_awareness():
+    """On Windows, opt into real (physical) pixels. Without this, display scaling
+    (125%/150%) makes Windows silently upscale the window, so an 800px window can
+    become ~1200 physical px and its bottom (the action bar) falls off-screen."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)   # per-monitor aware (Win 8.1+)
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()        # system aware (older)
+    except Exception:
+        pass
+
+
 async def main():
+    _enable_dpi_awareness()
     pygame.init()
     pygame.display.set_caption(config.TITLE)
 
     # Fit the initial window to the desktop so the bottom action bar is never
-    # pushed off-screen (e.g. an 800px-tall window on a 768px laptop screen).
+    # pushed off-screen (too-tall window, or display-scaling overflow).
     win_w, win_h = config.WINDOW_WIDTH, config.WINDOW_HEIGHT
     try:
         dw, dh = pygame.display.get_desktop_sizes()[0]
-        win_w = min(win_w, dw)
-        win_h = max(480, min(win_h, dh - 100))   # leave room for title bar + taskbar
+        win_w = min(win_w, dw - 20)
+        win_h = max(480, min(win_h, dh - 120))   # leave room for title bar + taskbar
     except Exception:
         pass
     screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
