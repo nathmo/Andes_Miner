@@ -187,9 +187,12 @@ class UI:
         surf.blit(self.font.render(f"{int(econ.jammies)}", True, config.COL_ACCENT), (x + jw + 3, y))
         cw = self._icon(surf, "iced_coffee", x + 112, y - 2, 18)
         surf.blit(self.font.render(f"{econ.coffee}", True, mcol), (x + 112 + cw + 2, y)); y += 20
-        if econ.power_demand > 0 or econ.solar_supply > 0:
-            ptxt = f"Power {econ.power_demand:.0f}  (solar {econ.solar_supply:.0f})"
-            surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 16
+        if econ.power_demand > 0 or econ.solar_supply > 0 or econ.battery_capacity > 0:
+            ptxt = f"Power {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f}"
+            surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 15
+            if econ.battery_capacity > 0:
+                btxt = f"Battery {econ.battery_charge:.0f}/{econ.battery_capacity:.0f}"
+                surf.blit(self.font_s.render(btxt, True, (130, 205, 140)), (x, y)); y += 15
         rC = pygame.Rect(x, y, w, 26)
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
         self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,

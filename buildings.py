@@ -47,5 +47,9 @@ class Building:
         return self.info.get("power_gen", False)
 
     @property
+    def is_battery(self):
+        return self.info.get("storage", False)
+
+    @property
     def power_draw(self):
         return config.BUILDING_POWER.get(self.btype, 0)

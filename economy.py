@@ -26,6 +26,9 @@ class Economy:
         self.energy_bought = 0.0        # cumulative grid power drawn
         self.power_demand = 0.0         # power used this tick
         self.solar_supply = 0.0         # solar power available this tick
+        self.grid_draw = 0.0            # power actually bought from the grid this tick
+        self.battery_charge = 0.0       # energy stored in Grid Batteries
+        self.battery_capacity = 0.0     # total storage from built batteries
 
         # stock market: per-resource price multiplier + recent price history
         self.price_mult = {res: 1.0 for res in TRADEABLE}
@@ -146,13 +149,20 @@ class Economy:
                 b.timer = 0.0
 
     def _allocate_power(self, dt, buildings, sun):
-        """Solar first, then buy the grid shortfall with jammies. Buildings that
-        can't be powered this tick brown out (b.powered=False)."""
+        """Power a machine from solar first, then a Grid Battery, then bought grid.
+        Surplus solar charges the battery. Machines that no source can cover this
+        tick brown out (b.powered=False)."""
         solar = sun * sum(config.SOLAR_ARRAY_OUTPUT for b in buildings
                           if b.built and b.enabled and b.power_gen)
+        self.battery_capacity = sum(config.BATTERY_CAPACITY for b in buildings
+                                    if b.built and b.enabled and b.is_battery)
+        self.battery_charge = min(self.battery_charge, self.battery_capacity)
+
+        battery_avail = (self.battery_charge / dt) if dt > 0 else 0.0
         buyable = (self.jammies / (dt * config.KWH_PRICE)
                    if dt > 0 and config.KWH_PRICE > 0 else 0.0)
-        budget = solar + max(0.0, buyable)
+        budget = solar + battery_avail + max(0.0, buyable)
+
         used = 0.0
         for b in buildings:
             if not b.active or not b.recipes:
@@ -168,11 +178,20 @@ class Economy:
                 b.powered = True
             else:
                 b.powered = False          # brownout
-        grid = max(0.0, used - solar)
-        self.jammies -= grid * dt * config.KWH_PRICE
-        self.energy_bought += grid * dt
+
+        # source the used power: solar -> battery -> grid
+        from_solar = min(used, solar)
+        from_battery = min(used - from_solar, battery_avail)
+        from_grid = used - from_solar - from_battery
+        self.battery_charge -= from_battery * dt
+        surplus_solar = max(0.0, solar - used)          # unused solar tops up storage
+        self.battery_charge = min(self.battery_capacity,
+                                  self.battery_charge + surplus_solar * dt * config.BATTERY_CHARGE_EFF)
+        self.jammies -= from_grid * dt * config.KWH_PRICE
+        self.energy_bought += from_grid * dt
         self.power_demand = used
         self.solar_supply = solar
+        self.grid_draw = from_grid
 
     def _pick_recipe(self, b):
         """First recipe (in config order) whose inputs are all in stock."""

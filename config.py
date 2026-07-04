@@ -199,6 +199,12 @@ BUILDINGS = {
     "electrolysis": dict(name="Electrolysis Plant", cost={"iron": 8, "copper": 5}, color=(150, 190, 175),
                         process=[dict(inp={"lithium_salt": 1}, out={"lithium": 1}, time=5.0)],
                         note="Lithium salt -> lithium metal"),
+    "battery_factory": dict(name="Battery Factory", cost={"iron": 12, "copper": 7, "silicon": 2}, color=(110, 200, 120),
+                        process=[dict(inp={"lithium": 2, "copper": 1}, out={"battery_cell": 1}, time=8.0)],
+                        note="Lithium + copper -> battery cells (power-hungry)"),
+    "battery": dict(name="Grid Battery", cost={"battery_cell": 3, "iron": 4}, color=(90, 185, 110),
+                        process=None, storage=True,
+                        note="Stores surplus solar to run machines after dark"),
 }
 
 COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
@@ -210,8 +216,10 @@ KWH_PRICE = 0.04                 # jammies per unit of grid power per second
 SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
 BUILDING_POWER = {               # power drawn while a building is processing
     "oven": 4, "crusher": 6, "arc_furnace": 12,
-    "silica_kiln": 8, "solar_foundry": 10, "electrolysis": 14,
+    "silica_kiln": 8, "solar_foundry": 10, "electrolysis": 14, "battery_factory": 16,
 }
+BATTERY_CAPACITY = 60.0          # energy stored per Grid Battery
+BATTERY_CHARGE_EFF = 0.9        # fraction of surplus solar that makes it into storage
 
 # ------------------------------------------------------------------ auto-planner
 # With a built Mining Planner, box-selecting rock also plans dig+road corridors
