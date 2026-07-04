@@ -68,6 +68,8 @@ class Agent:
             kinds.discard(HAUL)
         if game.has_active_vehicle_for(CLEAN):
             kinds.discard(CLEAN)
+        if game.has_active_vehicle_for(BUILD_ROAD):
+            kinds.discard(BUILD_ROAD)     # a road paver frees workers from paving
         return kinds
 
     def _begin_path(self, path):

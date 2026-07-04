@@ -134,6 +134,8 @@ VEHICLES = {
                           cost={"iron": 6, "copper": 3}, color=(230, 130, 60)),
     "dozer_m":       dict(name="Medium Bulldozer", tier="medium", speed=100, carry=0, mine_mult=0, clean_mult=6, jobs=("CLEAN",),
                           cost={"iron": 5, "copper": 2}, color=(230, 210, 70)),
+    "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=95, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
+                          cost={"iron": 5, "copper": 2}, color=(140, 142, 150)),
     "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=8, mine_mult=8, clean_mult=8, jobs=("MINE", "CLEAN", "HAUL"),
                           cost={"iron": 15, "copper": 10}, color=(200, 90, 200)),
 }
