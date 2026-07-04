@@ -85,6 +85,8 @@ async def main():
                 game.log("Game saved")
             except Exception as ex:
                 game.log(f"Save failed: {ex}")
+        if game.want_quit:                 # settings -> Save & Quit (save ran above)
+            running = False
         if game.want_load:
             game.want_load = False
             try:

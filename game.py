@@ -84,6 +84,7 @@ class Game:
         self.want_save = False
         self.want_load = False
         self.want_load_path = None    # load a specific backup slot
+        self.want_quit = False        # settings menu -> save & exit
         self.show_load_menu = False
         self._backup_t = 0.0
         self._backup_step = 0

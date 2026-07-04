@@ -128,7 +128,7 @@ class UI:
             ("Clouds", "toggle_clouds", game.show_clouds),
             ("Condors (birds)", "toggle_birds", game.show_birds),
         ]
-        pw, ph = 300, 52 + 30 * len(rows)
+        pw, ph = 300, 52 + 30 * len(rows) + 44   # room for the save/quit row
         box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
@@ -144,6 +144,15 @@ class UI:
             self._button(surf, rb, "On" if on else "Off", mouse, on=on)
             self._add(rb, act)
             y += 30
+        # save / quit
+        pygame.draw.line(surf, config.COL_PANEL_EDGE, (box.x + 12, y + 2), (box.right - 12, y + 2))
+        y += 12
+        rsave = pygame.Rect(box.x + 14, y, 128, 28)
+        self._button(surf, rsave, "Save game", mouse)
+        self._add(rsave, "save_game")
+        rquit = pygame.Rect(box.right - 14 - 128, y, 128, 28)
+        self._button(surf, rquit, "Save & Quit", mouse)
+        self._add(rquit, "quit_game")
 
     # ------------------------------------------------------------------ market panel
     def _sparkline(self, surf, values, rect, col):
@@ -624,6 +633,11 @@ class UI:
             game.show_clouds = not game.show_clouds
         elif action == "toggle_birds":
             game.show_birds = not game.show_birds
+        elif action == "save_game":
+            game.want_save = True
+        elif action == "quit_game":
+            game.want_save = True         # save before exiting so no progress is lost
+            game.want_quit = True
         elif action == "toggle_building":
             game.toggle_selected_building()
         elif action == "close_building":
