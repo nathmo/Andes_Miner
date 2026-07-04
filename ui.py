@@ -248,6 +248,9 @@ class UI:
         if game.rubble_short:
             surf.blit(self.font_b.render("RUBBLE SHORTAGE", True, (240, 170, 90)), (ox, 11))
             ox += self.font.size("RUBBLE SHORTAGE")[0] + 16
+        if game.power_blackout:
+            surf.blit(self.font_b.render("BLACKOUT", True, (255, 90, 90)), (ox, 11))
+            ox += self.font.size("BLACKOUT")[0] + 16
         # overarching goal: villages linked by road
         vn = len(game.world.villages)
         vtxt = f"Villages linked: {game.villages_connected}/{vn}"

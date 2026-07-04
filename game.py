@@ -63,6 +63,7 @@ class Game:
         # upkeep (salary paid in iced coffee, per completed job — register_action)
         self.wages_due = False        # True while any worker is paused unpaid
         self.rubble_short = False      # True while road jobs are stalled with no rubble
+        self.power_blackout = False    # True while machines are stopped for lack of cash
         self.selected_building = None
 
         # overarching goal: link villages to the road network
@@ -182,6 +183,14 @@ class Game:
                 self.log("Rubble shortage — roads need rubble. Clean rubble or buy some.")
             elif was_short and not self.rubble_short:
                 self.log("Rubble restored — road building resuming")
+
+            # electric blackout: machines stopped because there's no cash for grid power
+            was_black = self.power_blackout
+            self.power_blackout = self.economy.brownout
+            if self.power_blackout and not was_black:
+                self.log("Electric blackout — no cash for grid power. Sell goods or build solar.")
+            elif was_black and not self.power_blackout:
+                self.log("Power restored — machines running again")
 
             self._update_goal()
             self._auto_trade(sim_dt)
