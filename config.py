@@ -249,13 +249,15 @@ AUTO_SELL_KEEP = {"iron": 5, "copper": 5, "silicon": 2, "lithium": 2}  # never a
 COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 
 # ------------------------------------------------------------------ energy / grid
-# Processing machines draw power while running. Solar Arrays generate it; any
-# shortfall is auto-bought from the grid with jammies. No cash -> machines stop.
-KWH_PRICE = 0.04                 # jammies per unit of grid power per second
+# Processing machines consume energy per completed operation. While a recipe runs,
+# a machine draws power = MACHINE_KWH_PER_OP / recipe_time, so total energy per
+# operation is fixed regardless of how long the recipe takes. Solar Arrays generate
+# power; any shortfall is auto-bought from the grid. No cash -> machines stop.
+KWH_PRICE = 0.04                 # base jammies per kWh of grid power (drifts on the market)
 SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
-BUILDING_POWER = {               # power drawn while a building is processing
-    "oven": 4, "crusher": 6, "arc_furnace": 12,
-    "silica_kiln": 8, "solar_foundry": 10, "electrolysis": 14, "battery_factory": 16,
+MACHINE_KWH_PER_OP = {           # energy (kWh) each machine uses per completed operation
+    "oven": 24, "crusher": 18, "arc_furnace": 48,
+    "silica_kiln": 24, "solar_foundry": 60, "electrolysis": 70, "battery_factory": 128,
 }
 BATTERY_CAPACITY = 60.0          # energy stored per Grid Battery
 BATTERY_CHARGE_EFF = 0.9        # fraction of surplus solar that makes it into storage

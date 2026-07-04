@@ -68,6 +68,7 @@ def save_game(game, path=config.SAVE_FILE):
         "jammies": game.economy.jammies,
         "coffee": game.economy.coffee,
         "price_mult": game.economy.price_mult,
+        "elec_mult": game.economy.elec_mult,
         "energy_bought": game.economy.energy_bought,
         "battery_charge": game.economy.battery_charge,
         "grid_carbon": game.economy.grid_carbon,
@@ -143,6 +144,7 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.economy.inv = {res: data["inv"].get(res, 0) for res in config.RESOURCES}
     game.economy.jammies = data.get("jammies", config.JAMMIES_START)
     game.economy.coffee = data.get("coffee", config.COFFEE_START)
+    game.economy.elec_mult = data.get("elec_mult", 1.0)
     game.economy.energy_bought = data.get("energy_bought", 0.0)
     game.economy.battery_charge = data.get("battery_charge", 0.0)
     game.economy.grid_carbon = data.get("grid_carbon", config.GRID_CARBON_START)

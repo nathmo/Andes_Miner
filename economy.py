@@ -41,6 +41,9 @@ class Economy:
         # stock market: per-resource price multiplier + recent price history
         self.price_mult = {res: 1.0 for res in TRADEABLE}
         self.price_hist = {res: [config.SELL_PRICES[res]] for res in TRADEABLE}
+        # electricity price drifts too, and is charted in the market trend panel
+        self.elec_mult = 1.0
+        self.elec_hist = [config.KWH_PRICE]
         self._market_t = 0.0
 
     # ------------------------------------------------------------------ stockpile
@@ -58,6 +61,10 @@ class Economy:
     def buy_price(self, res):
         """Current per-unit buy price (base * market multiplier, floored at 1)."""
         return max(1, round(config.BUY_PRICES.get(res, 0) * self.price_mult.get(res, 1.0)))
+
+    def elec_price(self):
+        """Current grid electricity price (jammies per kWh), drifting on the market."""
+        return config.KWH_PRICE * self.elec_mult
 
     def sell(self, res, batch=None):
         """Sell up to `batch` units of a resource for jammies. Returns jammies earned."""
@@ -89,6 +96,14 @@ class Economy:
             hist.append(self.sell_price(res))
             if len(hist) > config.PRICE_HISTORY:
                 hist.pop(0)
+        # electricity price drifts on the same random-walk + mean-revert model
+        m = self.elec_mult
+        m += random.uniform(-1.0, 1.0) * config.PRICE_DRIFT
+        m += (1.0 - m) * config.PRICE_REVERT
+        self.elec_mult = max(config.PRICE_MIN_MULT, min(config.PRICE_MAX_MULT, m))
+        self.elec_hist.append(self.elec_price())
+        if len(self.elec_hist) > config.PRICE_HISTORY:
+            self.elec_hist.pop(0)
         self.emissions_hist.append(self.emissions_total)
         if len(self.emissions_hist) > config.EMISS_HISTORY:
             self.emissions_hist.pop(0)
@@ -169,9 +184,10 @@ class Economy:
                                     if b.built and b.enabled and b.is_battery)
         self.battery_charge = min(self.battery_charge, self.battery_capacity)
 
+        price = self.elec_price()
         battery_avail = (self.battery_charge / dt) if dt > 0 else 0.0
-        buyable = (self.jammies / (dt * config.KWH_PRICE)
-                   if dt > 0 and config.KWH_PRICE > 0 else 0.0)
+        buyable = (self.jammies / (dt * price)
+                   if dt > 0 and price > 0 else 0.0)
         budget = solar + battery_avail + max(0.0, buyable)
 
         used = 0.0
@@ -179,11 +195,11 @@ class Economy:
             if not b.active or not b.recipes:
                 b.powered = False
                 continue
-            will_run = b.current is not None or self._pick_recipe(b) is not None
-            if not will_run:
+            idx = b.current if b.current is not None else self._pick_recipe(b)
+            if idx is None:
                 b.powered = False
                 continue
-            p = b.power_draw
+            p = b.power_for(idx)
             if used + p <= budget + 1e-9:
                 used += p
                 b.powered = True
@@ -209,7 +225,7 @@ class Economy:
         exported = max(0.0, surplus - stored / config.BATTERY_CHARGE_EFF)
         self.export_power = exported / dt if dt > 0 else 0.0
 
-        self.jammies -= from_grid * dt * config.KWH_PRICE
+        self.jammies -= from_grid * dt * price
         self.energy_bought += from_grid * dt
         self.emissions_rate = from_grid * self.grid_carbon * config.CO2_SCALE   # kg/s
         self.emissions_total += self.emissions_rate * dt

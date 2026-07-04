@@ -161,7 +161,7 @@ class UI:
             return
         from economy import TRADEABLE
         econ = game.economy
-        pw, ph = 430, 44 + 18 * len(TRADEABLE) + 56
+        pw, ph = 430, 44 + 18 * len(TRADEABLE) + 74
         box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
@@ -182,6 +182,14 @@ class UI:
             self._sparkline(surf, econ.price_hist.get(res, []),
                             pygame.Rect(box.x + 210, y - 1, 200, 15), col)
             y += 18
+        # --- electricity price trend ------------------------------------------
+        ecol = (150, 200, 230)
+        pygame.draw.circle(surf, ecol, (box.x + 22, y + 7), 5)
+        surf.blit(self.font_s.render("Electricity", True, config.COL_TEXT), (box.x + 34, y))
+        surf.blit(self.font_s.render(f"{econ.elec_price():.3f}j/kWh", True, config.COL_ACCENT),
+                  (box.x + 128, y))
+        self._sparkline(surf, econ.elec_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), ecol)
+        y += 18
         # --- grid carbon intensity + emissions over time (item 27) ------------
         y += 6
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (box.x + 12, y), (box.right - 12, y))

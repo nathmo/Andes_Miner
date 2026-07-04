@@ -52,4 +52,14 @@ class Building:
 
     @property
     def power_draw(self):
-        return config.BUILDING_POWER.get(self.btype, 0)
+        """Instantaneous power while running the current recipe."""
+        return self.power_for(self.current)
+
+    def power_for(self, idx):
+        """Power drawn if running recipe `idx`: energy-per-op / recipe time, so the
+        total energy per operation equals MACHINE_KWH_PER_OP regardless of duration."""
+        if idx is None or not self.recipes:
+            return 0.0
+        t = self.recipes[idx]["time"]
+        kwh = config.MACHINE_KWH_PER_OP.get(self.btype, 0)
+        return kwh / t if t > 0 else 0.0
