@@ -89,6 +89,7 @@ def save_game(game, path=config.SAVE_FILE):
         "backup_step": game._backup_step,
         "show_clouds": game.show_clouds,
         "show_birds": game.show_birds,
+        "ui_scale": game.ui_scale,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -180,5 +181,6 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game._backup_step = data.get("backup_step", 0)
     game.show_clouds = data.get("show_clouds", True)
     game.show_birds = data.get("show_birds", True)
+    game.ui_scale = data.get("ui_scale", 1.0)
     game._ensure_depot()          # add the depot to saves that predate it
     return game

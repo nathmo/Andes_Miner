@@ -22,7 +22,13 @@ PANEL_TABS = [("build", "Build"), ("fleet", "Fleet"), ("trade", "Trade")]
 
 class UI:
     def __init__(self, screen_w, screen_h):
+        self.real_w, self.real_h = screen_w, screen_h
+        # The UI is drawn at a LOGICAL size = real / scale, then scaled to the
+        # window, so the whole HUD grows/shrinks with the UI-scale setting while
+        # the drawing code stays screen-relative. sw/sh are the logical size.
+        self.scale = 1.0
         self.sw, self.sh = screen_w, screen_h
+        self._surf = None       # logical-size surface used when scale != 1
         self.font = pygame.font.SysFont("consolas", 14)
         self.font_b = pygame.font.SysFont("consolas", 14, bold=True)
         self.font_s = pygame.font.SysFont("consolas", 11)
@@ -38,7 +44,14 @@ class UI:
         self._panel_max_scroll = 0.0
 
     def resize(self, w, h):
-        self.sw, self.sh = w, h
+        self.real_w, self.real_h = w, h
+        self._relayout()
+
+    def _relayout(self):
+        """Recompute the logical HUD size from the window size and UI scale."""
+        self.sw = max(640, int(self.real_w / self.scale))
+        self.sh = max(400, int(self.real_h / self.scale))
+        self._surf = None
 
     # ------------------------------------------------------------------ icons
     def _icon(self, surf, key, x, y, size=16):
@@ -82,18 +95,36 @@ class UI:
 
     # ------------------------------------------------------------------ draw
     def draw(self, surf, game):
+        scale = getattr(game, "ui_scale", 1.0)
+        if scale != self.scale:
+            self.scale = scale
+            self._relayout()
+
         self.buttons = []
         self._panels = []
-        mouse = pygame.mouse.get_pos()
-        self._draw_topbar(surf, game, mouse)
-        self._draw_panel(surf, game, mouse)
-        self._draw_bottombar(surf, game, mouse)
-        self._draw_building_panel(surf, game, mouse)
-        self._draw_market_panel(surf, game, mouse)
-        self._draw_settings_menu(surf, game, mouse)
-        self._draw_load_menu(surf, game, mouse)
-        self._draw_tileinfo(surf, game)
-        self._draw_messages(surf, game)
+        mx, my = pygame.mouse.get_pos()
+        mouse = (mx / self.scale, my / self.scale)     # logical-space mouse
+
+        if self.scale == 1.0:
+            target = surf
+        else:
+            if self._surf is None:
+                self._surf = pygame.Surface((self.sw, self.sh), pygame.SRCALPHA)
+            self._surf.fill((0, 0, 0, 0))
+            target = self._surf
+
+        self._draw_topbar(target, game, mouse)
+        self._draw_panel(target, game, mouse)
+        self._draw_bottombar(target, game, mouse)
+        self._draw_building_panel(target, game, mouse)
+        self._draw_market_panel(target, game, mouse)
+        self._draw_settings_menu(target, game, mouse)
+        self._draw_load_menu(target, game, mouse)
+        self._draw_tileinfo(target, game)
+        self._draw_messages(target, game)
+
+        if self.scale != 1.0:
+            surf.blit(pygame.transform.smoothscale(self._surf, (self.real_w, self.real_h)), (0, 0))
 
     # ------------------------------------------------------------------ load menu
     def _draw_load_menu(self, surf, game, mouse):
@@ -128,7 +159,7 @@ class UI:
             ("Clouds", "toggle_clouds", game.show_clouds),
             ("Condors (birds)", "toggle_birds", game.show_birds),
         ]
-        pw, ph = 300, 52 + 30 * len(rows) + 44   # room for the save/quit row
+        pw, ph = 300, 52 + 30 * (len(rows) + 1) + 44   # +1 row for UI scale, save/quit
         box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
@@ -144,6 +175,14 @@ class UI:
             self._button(surf, rb, "On" if on else "Off", mouse, on=on)
             self._add(rb, act)
             y += 30
+        # UI scale: -  value  +
+        surf.blit(self.font.render(f"UI scale: {game.ui_scale:.2f}x", True, config.COL_TEXT),
+                  (box.x + 16, y + 3))
+        for lbl, act, rx in [("-", "ui_scale_dn", box.right - 84), ("+", "ui_scale_up", box.right - 40)]:
+            rb = pygame.Rect(rx, y, 30, 24)
+            self._button(surf, rb, lbl, mouse)
+            self._add(rb, act)
+        y += 30
         # save / quit
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (box.x + 12, y + 2), (box.right - 12, y + 2))
         y += 12
@@ -590,19 +629,26 @@ class UI:
     def _cost_str(self, cost):
         return " ".join(f"{v}{config.RESOURCE_ABBR.get(k, k[:2].title())}" for k, v in cost.items())
 
+    def _logical(self, pos):
+        """Map a real window position into logical (UI-space) coordinates."""
+        return (pos[0] / self.scale, pos[1] / self.scale)
+
     def point_in_ui(self, pos):
-        return any(p.collidepoint(pos) for p in self._panels)
+        lp = self._logical(pos)
+        return any(p.collidepoint(lp) for p in self._panels)
 
     def point_in_panel(self, pos):
         """True over the scrollable side panel (so the wheel scrolls, not zooms)."""
-        return self._side_panel_rect is not None and self._side_panel_rect.collidepoint(pos)
+        return (self._side_panel_rect is not None
+                and self._side_panel_rect.collidepoint(self._logical(pos)))
 
     def scroll_panel(self, dy):
         self.panel_scroll = max(0.0, min(self._panel_max_scroll, self.panel_scroll + dy))
 
     def handle_click(self, pos, game):
+        lp = self._logical(pos)
         for b in self.buttons:
-            if b["rect"].collidepoint(pos):
+            if b["rect"].collidepoint(lp):
                 self._do(b["action"], b["arg"], game)
                 return True
         return self.point_in_ui(pos)
@@ -648,6 +694,10 @@ class UI:
             game.show_clouds = not game.show_clouds
         elif action == "toggle_birds":
             game.show_birds = not game.show_birds
+        elif action == "ui_scale_up":
+            game.ui_scale = round(min(2.0, game.ui_scale + 0.1), 2)
+        elif action == "ui_scale_dn":
+            game.ui_scale = round(max(0.7, game.ui_scale - 0.1), 2)
         elif action == "save_game":
             game.want_save = True
         elif action == "quit_game":

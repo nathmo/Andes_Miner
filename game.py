@@ -48,6 +48,7 @@ class Game:
         # display preferences (settings menu)
         self.show_clouds = True       # drifting clouds in the sky
         self.show_birds = True        # circling condors
+        self.ui_scale = 1.0           # HUD scale factor (settings menu)
 
         # time / speed
         self.speed_index = 0
