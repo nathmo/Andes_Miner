@@ -119,4 +119,5 @@ def load_game(path=config.SAVE_FILE, camera=None):
         camera.zoom = cam.get("zoom", camera.zoom)
     game.speed_index = data.get("speed_index", 0)
     game.paused = data.get("paused", False)
+    game._ensure_depot()          # add the depot to saves that predate it
     return game

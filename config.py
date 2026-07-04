@@ -142,7 +142,10 @@ VEHICLES = {
 
 # ------------------------------------------------------------------ buildings
 # process: consume `inp` from the global stockpile every `time` s -> produce `out`.
+# buildable=False marks a structure the player can't place (it starts on the map).
 BUILDINGS = {
+    "depot":       dict(name="Storage Depot", cost={}, color=(168, 150, 116), buildable=False,
+                        process=None, note="Central storage — haulers deliver ore & rubble here"),
     "workshop":    dict(name="Vehicle Workshop", cost={"iron": 5, "copper": 3}, color=(120, 130, 150),
                         process=None, note="Unlocks vehicle manufacturing"),
     "oven":        dict(name="Simple Oven", cost={"rubble": 5}, color=(180, 110, 80),

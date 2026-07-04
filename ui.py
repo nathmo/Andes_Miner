@@ -154,6 +154,8 @@ class UI:
         # --- BUILD -------------------------------------------------------------
         surf.blit(self.font_b.render("BUILD", True, config.COL_TEXT), (x, y)); y += 22
         for bt, info in config.BUILDINGS.items():
+            if not info.get("buildable", True):      # e.g. the pre-placed depot
+                continue
             r = pygame.Rect(x, y, w, 38)
             on = game.tool == "build" and game.build_choice == bt
             aff = game.economy.can_afford(info["cost"])

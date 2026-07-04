@@ -25,6 +25,7 @@ class Game:
         self.jobs = JobManager(self.world)
         self.buildings = []
         self.camera = camera
+        self._ensure_depot()          # central storage on the HQ tile
 
         self.num_workers = config.START_WORKERS
         self.vehicles = []            # Agent objects (vehicles)
@@ -53,6 +54,21 @@ class Game:
         # save/load requests raised by input, handled by main
         self.want_save = False
         self.want_load = False
+
+    # ------------------------------------------------------------------ depot
+    def _ensure_depot(self):
+        """Guarantee a Storage Depot sits on the HQ tile (the haul drop-off), so
+        deliveries land in a visible building rather than on bare road. Keeps the
+        tile and the buildings list consistent (load resets the list but not the
+        tile reference)."""
+        t = self.world.get_tile(*self.world.hq)
+        if t.building is not None:
+            if t.building not in self.buildings:
+                self.buildings.append(t.building)
+            return
+        depot = Building("depot", *self.world.hq, built=True)
+        t.building = depot
+        self.buildings.append(depot)
 
     # ------------------------------------------------------------------ agents
     def _reconcile_agents(self):
