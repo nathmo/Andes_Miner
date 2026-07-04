@@ -270,6 +270,8 @@ class Game:
         reach = self.max_mine_reach()
         far = []
         for (q, r) in cells:
+            if self.world.is_sky(q, r):          # open sky above the summit: nothing to do
+                continue
             t = self.world.get_tile(q, r)
             if t.state == ROCK and self.tool != "clean":
                 if self.world.mineable(t, reach):

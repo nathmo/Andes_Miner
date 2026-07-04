@@ -74,6 +74,16 @@ def rock_at(q, r, seed):
     return "andesite"
 
 
+def ridge_r(q, seed):
+    """The jagged summit boundary for column q: the highest (most negative) r that
+    still holds solid rock. Anything with r < ridge_r(q) is open sky above the
+    mountain. Deterministic 2-octave value noise so the ridgeline is stable."""
+    n1 = _value_noise(q * config.RIDGE_JAG_FREQ, 0.0, seed + 271)
+    n2 = _value_noise(q * config.RIDGE_JAG_FREQ * 2.7, 5.0, seed + 733)
+    jag = 0.7 * n1 + 0.3 * n2                 # [0,1): 0 = peak, 1 = notch
+    return int(round(config.MAP_TOP_R + jag * config.RIDGE_JAG_AMP))
+
+
 def villages(seed, n=config.NUM_VILLAGES):
     """Deterministic village sites, scattered widely across the slope (big lateral
     spread) to reward exploring sideways. Pure function of the seed."""

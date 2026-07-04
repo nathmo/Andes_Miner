@@ -35,6 +35,7 @@ class Renderer:
         self._sprite_cache = {}      # (key, target_w) -> scaled Surface
         self.env = None              # sky ambiance (clouds + birds), lazily created
         self._last_ticks = None
+        self._sky_cache = None       # cached vertical sky gradient (behind terrain)
 
     def _blit_sprite(self, surface, key, sprite, cx, cy, target_w):
         tw = max(1, int(target_w))
@@ -62,17 +63,22 @@ class Renderer:
 
     # ------------------------------------------------------------------ main
     def draw(self, surface, game):
-        surface.fill(config.COL_BG)
+        surface.blit(self._sky_bg(surface.get_size()), (0, 0))   # sky behind the terrain
         cam = game.camera
         size = cam.hex_pixel_size
         q_lo, q_hi, r_lo, r_hi = cam.visible_hex_box()
 
         show_mine_hint = game.tool == "excavate"
+        world = game.world
 
         # Draw tiles back-to-front (increasing r = down the slope) for overlap.
+        # Tiles above the jagged summit ridge are skipped, so the sky shows through
+        # and the topmost drawn row forms the mountain silhouette.
         for r in range(r_lo, r_hi + 1):
             for q in range(q_lo, q_hi + 1):
-                tile = game.world.get_tile(q, r)
+                if world.is_sky(q, r):
+                    continue
+                tile = world.get_tile(q, r)
                 wx, wy = hexgrid.hex_to_pixel(q, r, config.HEX_SIZE)
                 cx, cy = cam.world_to_screen(wx, wy)
                 self._draw_tile(surface, tile, cx, cy, size, show_mine_hint, game)
@@ -200,6 +206,21 @@ class Renderer:
         # Drive the sky by SIM time: frozen when paused, and scaled by game speed.
         self.env.update(dt * game.sim_multiplier(), cam)
         self.env.draw(surface, cam, show_clouds=game.show_clouds, show_birds=game.show_birds)
+
+    def _sky_bg(self, size):
+        """Cached vertical sky gradient drawn behind the terrain; only visible above
+        the summit ridge (elsewhere the infinite terrain covers it)."""
+        if self._sky_cache is not None and self._sky_cache.get_size() == size:
+            return self._sky_cache
+        w, h = size
+        s = pygame.Surface(size)
+        top, bot = config.COL_SKY_TOP, config.COL_SKY_HORIZON
+        for y in range(h):
+            f = y / max(1, h - 1)
+            pygame.draw.line(s, tuple(int(top[i] + (bot[i] - top[i]) * f) for i in range(3)),
+                             (0, y), (w, y))
+        self._sky_cache = s
+        return s
 
     def _night_overlay(self, size, alpha):
         """Cached dark-blue overlay used to dim the world at night."""

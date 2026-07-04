@@ -21,7 +21,20 @@ class World:
         self.hq = (0, 0)                 # HQ tile (haul destination)
         self.road_tiles = set()          # cache of ROAD (q, r) for range checks
         self.villages = worldgen.villages(seed)   # goal outposts to connect by road
+        self._ridge = {}                 # q -> jagged summit boundary r (cached)
         self._setup_start_area()
+
+    # ------------------------------------------------------------------ summit ridge
+    def ridge_r(self, q):
+        r = self._ridge.get(q)
+        if r is None:
+            r = worldgen.ridge_r(q, self.seed)
+            self._ridge[q] = r
+        return r
+
+    def is_sky(self, q, r):
+        """True above the jagged summit ridge — open sky, not solid rock."""
+        return r < self.ridge_r(q)
 
     # ------------------------------------------------------------------ chunks
     def _ensure_chunk(self, cq, cr):
@@ -121,6 +134,8 @@ class World:
         if reach is None:
             reach = config.MINE_ROAD_RANGE
         if tile.state != ROCK:
+            return False
+        if self.is_sky(tile.q, tile.r):      # open sky above the summit — nothing to mine
             return False
         # The rock itself is a wall; check its passable walkable-neighbours.
         for (nq, nr) in hexgrid.walkable_neighbors(tile.q, tile.r):

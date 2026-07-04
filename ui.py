@@ -519,6 +519,16 @@ class UI:
         if game.hover_hex is None:
             return
         q, r = game.hover_hex
+        if game.world.is_sky(q, r):          # above the summit ridge — open sky
+            lines = [(f"Open sky  ({q},{r})", config.COL_TEXT),
+                     ("Above the summit — nothing to mine here", config.COL_TEXT_DIM)]
+            box = pygame.Rect(8, self.sh - BOT_H - 12 - 18 * len(lines) - 8, 250, 18 * len(lines) + 8)
+            s = pygame.Surface(box.size, pygame.SRCALPHA); s.fill((*config.COL_PANEL, 230))
+            surf.blit(s, box.topleft)
+            pygame.draw.rect(surf, config.COL_PANEL_EDGE, box, 1)
+            for i, (ln, col) in enumerate(lines):
+                surf.blit(self.font_s.render(ln, True, col), (box.x + 8, box.y + 5 + i * 18))
+            return
         t = game.world.get_tile(q, r)
         # A descriptive name from state + rock: "Rhyolite", "Diorite rubble",
         # "Excavated basalt", "Road". Only solid rock still holds ore to mine.

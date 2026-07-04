@@ -56,8 +56,19 @@ MAX_ZOOM = 2.4
 ZOOM_STEP = 1.12                  # multiplier per wheel notch
 
 # Splash intro: open far out on the summit, then zoom down to HQ on SPACE.
-SPLASH_SUMMIT_R = 24              # how far up the slope the opening view sits
-SPLASH_ZOOM_DUR = 1.8            # seconds for the zoom-in animation
+SPLASH_SUMMIT_R = 115            # how far up the slope the opening view sits (near the ridge)
+SPLASH_ZOOM_DUR = 2.4            # seconds for the zoom-in animation
+
+# ------------------------------------------------------------------ summit ridge
+# The map is capped upslope by a jagged mountain ridge, so at the opening (zoomed
+# out) view you see the peaks against the sky. Terrain exists for r >= ridge(q);
+# above it (more negative r, higher up) is open sky. r is negative up the slope,
+# so MAP_TOP_R is the highest peaks and MAP_TOP_R + RIDGE_JAG_AMP the notches.
+MAP_TOP_R = -128                 # baseline summit row (~128 tiles up from HQ)
+RIDGE_JAG_AMP = 14               # how deep the notches cut below the peaks (tiles)
+RIDGE_JAG_FREQ = 0.11            # ridge noise frequency (higher = more, narrower peaks)
+COL_SKY_TOP = (120, 150, 190)    # sky gradient: high (top of screen)
+COL_SKY_HORIZON = (60, 70, 88)   # sky gradient: toward the horizon
 
 # ------------------------------------------------------------------ camera
 CAM_PAN_SPEED = 500               # px/sec for WASD / arrow panning (screen space)
@@ -256,8 +267,8 @@ COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 KWH_PRICE = 0.04                 # base jammies per kWh of grid power (drifts on the market)
 SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
 MACHINE_KWH_PER_OP = {           # energy (kWh) each machine uses per completed operation
-    "oven": 24, "crusher": 18, "arc_furnace": 48,
-    "silica_kiln": 24, "solar_foundry": 60, "electrolysis": 70, "battery_factory": 128,
+    "oven": 6, "crusher": 2, "arc_furnace": 3,
+    "silica_kiln": 8, "solar_foundry": 60, "electrolysis": 70, "battery_factory": 128,
 }
 BATTERY_CAPACITY = 60.0          # energy stored per Grid Battery
 BATTERY_CHARGE_EFF = 0.9        # fraction of surplus solar that makes it into storage
