@@ -28,7 +28,12 @@ Press **SPACE** at the summit splash to zoom in and start.
   orders a clean-up. RMB cancels.
 - **Road tool** — LMB (or drag) plans road on excavated tiles; a builder carries
   rubble to the site and lays it.
-- **Build tool** — pick a building in the right panel, LMB to place it.
+- **Right panel tabs** — the side panel is split into **Build** (place buildings),
+  **Fleet** (manufacture vehicles, recruit workers), and **Trade** (buy coffee,
+  sell/buy materials). Picking the Build tool jumps to the Build tab; the wheel
+  scrolls a tab if its list is taller than the panel. Your jammies and coffee
+  always show in the top bar.
+- **Build tool** — pick a building on the Build tab, LMB to place it.
 - **Market button** — live prices, trend sparklines, grid carbon + emissions graph.
 - **Pan tool / MMB / drag** — pan. **WASD / arrows** also pan. **Wheel** zooms.
 - **Home button / H** — recenter the view on HQ so panning can't lose you.
@@ -74,8 +79,8 @@ auto-stops so ore isn't wasted (you can force it back on from its panel).
   solar yield. A **Warehouse** auto-sells to hold cash and coffee above thresholds.
 
 ## Money & upkeep — jammies & iced coffee
-Sell any stockpiled resource for **jammies** (the game's money) from the MARKET
-panel. Spend jammies on **iced coffee** — your workers' wages. Wages are
+Sell any stockpiled resource for **jammies** (the game's money) from the **Trade**
+tab. Spend jammies on **iced coffee** — your workers' wages. Wages are
 **action-based, not timed**: a worker drinks one iced coffee for roughly every ten
 jobs it finishes, so idle workers cost nothing and there's no clock pressure. Run
 out of coffee and that worker pauses until you can pay it. Prices and rates all

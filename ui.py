@@ -14,6 +14,10 @@ from tiles import ROCK, RUBBLE, EXCAVATED
 TOP_H = 40
 BOT_H = 46
 PANEL_W = 214
+TAB_H = 30               # height of the side-panel tab row
+
+# The side panel is split into tabs so its button list can't overflow the screen.
+PANEL_TABS = [("build", "Build"), ("fleet", "Fleet"), ("trade", "Trade")]
 
 
 class UI:
@@ -25,6 +29,13 @@ class UI:
         self.buttons = []
         self._panels = []
         self._icons = {}        # (key, size) -> scaled Surface (or None if missing)
+        # Side-panel tabs + scroll: content is drawn under the tab row, clipped to
+        # the panel, and scrollable so no button ever falls off-screen.
+        self.panel_tab = "build"
+        self.panel_scroll = 0.0
+        self._side_panel_rect = None
+        self._panel_content_rect = None
+        self._panel_max_scroll = 0.0
 
     def resize(self, w, h):
         self.sw, self.sh = w, h
@@ -172,6 +183,18 @@ class UI:
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (0, TOP_H), (self.sw, TOP_H))
 
         x = 12
+        # money + coffee: always visible, independent of the active side-panel tab
+        econ = game.economy
+        jw = self._icon(surf, "jammies", x, TOP_H // 2 - 9, 18)
+        jtxt = f"{int(econ.jammies)}"
+        surf.blit(self.font.render(jtxt, True, config.COL_ACCENT), (x + jw + 2, 11))
+        x += jw + 2 + self.font.size(jtxt)[0] + 14
+        cw = self._icon(surf, "iced_coffee", x, TOP_H // 2 - 9, 18)
+        ctxt = f"{econ.coffee}"
+        ccol = (240, 120, 110) if game.wages_due else config.COL_TEXT
+        surf.blit(self.font.render(ctxt, True, ccol), (x + cw + 2, 11))
+        x += cw + 2 + self.font.size(ctxt)[0] + 18
+
         for res in config.RESOURCES:
             if game.economy.amount(res) <= 0:      # only show what you hold
                 continue
@@ -215,22 +238,96 @@ class UI:
     # ------------------------------------------------------------------ side panel
     def _draw_panel(self, surf, game, mouse):
         panel = pygame.Rect(self.sw - PANEL_W, TOP_H, PANEL_W, self.sh - TOP_H - BOT_H)
+        self._side_panel_rect = panel
         self._panels.append(panel)
         pygame.draw.rect(surf, config.COL_PANEL, panel)
         pygame.draw.line(surf, config.COL_PANEL_EDGE, (panel.x, panel.y), (panel.x, panel.bottom))
 
+        # --- tab row: Build / Fleet / Trade -----------------------------------
+        tw = PANEL_W // len(PANEL_TABS)
+        for i, (key, label) in enumerate(PANEL_TABS):
+            r = pygame.Rect(panel.x + i * tw, panel.y + 4, tw - 2, TAB_H - 8)
+            self._button(surf, r, label, mouse, on=self.panel_tab == key)
+            self._add(r, "panel_tab", key)
+
+        # --- content area: clipped + scrollable so buttons never overflow ------
+        content = pygame.Rect(panel.x, panel.y + TAB_H, PANEL_W, panel.bottom - (panel.y + TAB_H))
+        self._panel_content_rect = content
         x = panel.x + 10
         w = PANEL_W - 20
-        y = TOP_H + 8
-        econ = game.economy
+        top = content.y + 8
+        y = top - int(self.panel_scroll)
 
-        # --- MARKET: money, salary coffee, sell held resources -----------------
-        surf.blit(self.font_b.render("MARKET", True, config.COL_TEXT), (x, y)); y += 20
-        mcol = (240, 120, 110) if game.wages_due else config.COL_ACCENT
-        jw = self._icon(surf, "jammies", x, y - 2, 18)
-        surf.blit(self.font.render(f"{int(econ.jammies)}", True, config.COL_ACCENT), (x + jw + 3, y))
-        cw = self._icon(surf, "iced_coffee", x + 112, y - 2, 18)
-        surf.blit(self.font.render(f"{econ.coffee}", True, mcol), (x + 112 + cw + 2, y)); y += 20
+        prev_clip = surf.get_clip()
+        surf.set_clip(content)
+        if self.panel_tab == "build":
+            y = self._draw_build_tab(surf, game, mouse, x, w, y, content)
+        elif self.panel_tab == "fleet":
+            y = self._draw_fleet_tab(surf, game, mouse, x, w, y, content)
+        else:
+            y = self._draw_trade_tab(surf, game, mouse, x, w, y, content)
+        surf.set_clip(prev_clip)
+
+        # clamp scroll to the measured content height (measured this frame)
+        content_h = (y + int(self.panel_scroll)) - top
+        self._panel_max_scroll = max(0.0, content_h - (content.h - 12))
+        self.panel_scroll = max(0.0, min(self._panel_max_scroll, self.panel_scroll))
+
+        # scrollbar hint when there's more below/above
+        if self._panel_max_scroll > 0:
+            track_h = content.h - 12
+            bar_h = max(24, int(track_h * track_h / (track_h + self._panel_max_scroll)))
+            bar_y = top + int((track_h - bar_h) * (self.panel_scroll / self._panel_max_scroll))
+            pygame.draw.rect(surf, config.COL_PANEL_EDGE,
+                             (content.right - 5, bar_y, 3, bar_h), border_radius=2)
+
+    def _add_in(self, rect, clip, action, arg=None):
+        """Register a button only if it's fully inside the clip region, so a
+        scrolled-away button can't be clicked through the top/bottom bars."""
+        if rect.top >= clip.top and rect.bottom <= clip.bottom:
+            self._add(rect, action, arg)
+
+    # ------------------------------------------------------------------ build tab
+    def _draw_build_tab(self, surf, game, mouse, x, w, y, clip):
+        surf.blit(self.font_b.render("BUILD", True, config.COL_TEXT), (x, y)); y += 22
+        for bt, info in config.BUILDINGS.items():
+            if not info.get("buildable", True):      # e.g. the pre-placed depot
+                continue
+            r = pygame.Rect(x, y, w, 38)
+            on = game.tool == "build" and game.build_choice == bt
+            aff = game.economy.can_afford(info["cost"])
+            self._button(surf, r, info["name"], mouse, on=on, sub=self._cost_str(info["cost"]))
+            if not aff:
+                surf.blit(self.font_s.render("!", True, (230, 120, 120)), (r.right - 12, r.y + 4))
+            self._add_in(r, clip, "build_select", bt)
+            y += 40
+        return y
+
+    # ------------------------------------------------------------------ fleet tab
+    def _draw_fleet_tab(self, surf, game, mouse, x, w, y, clip):
+        surf.blit(self.font_b.render("VEHICLES", True, config.COL_TEXT), (x, y)); y += 22
+        ws = game.has_workshop()
+        if not ws:
+            surf.blit(self.font_s.render("Build a Vehicle Workshop first.", True, config.COL_TEXT_DIM),
+                      (x, y)); y += 18
+        for vt, info in config.VEHICLES.items():
+            r = pygame.Rect(x, y, w, 30)
+            aff = ws and game.economy.can_afford(info["cost"])
+            self._button(surf, r, info["name"], mouse, enabled=aff, sub=self._cost_str(info["cost"]))
+            self._add_in(r, clip, "manufacture", vt)
+            y += 32
+        y += 8
+        r = pygame.Rect(x, y, w, 28)
+        aff = game.economy.can_afford(config.RECRUIT_COST)
+        self._button(surf, r, "Recruit Worker", mouse, enabled=aff, sub=self._cost_str(config.RECRUIT_COST))
+        self._add_in(r, clip, "recruit")
+        y += 32
+        return y
+
+    # ------------------------------------------------------------------ trade tab
+    def _draw_trade_tab(self, surf, game, mouse, x, w, y, clip):
+        econ = game.economy
+        surf.blit(self.font_b.render("TRADE", True, config.COL_TEXT), (x, y)); y += 22
         if econ.power_demand > 0 or econ.solar_supply > 0 or econ.battery_capacity > 0:
             ptxt = f"Power {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f}"
             surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 15
@@ -244,7 +341,10 @@ class UI:
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
         self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,
                      enabled=econ.jammies >= ccost, sub=f"{ccost}j")
-        self._add(rC, "buy_coffee"); y += 30
+        self._add_in(rC, clip, "buy_coffee"); y += 30
+        rM = pygame.Rect(x, y, w, 22)
+        self._button(surf, rM, "Prices & Trends...", mouse, on=game.show_market)
+        self._add_in(rM, clip, "toggle_market"); y += 28
         for res in config.RESOURCES:
             if econ.amount(res) <= 0:
                 continue
@@ -253,7 +353,7 @@ class UI:
             gain = econ.sell_price(res) * config.SELL_BATCH
             surf.blit(self.font_s.render(f"+{gain}j", True, config.COL_TEXT_DIM),
                       (r.right - 42, r.y + 5))
-            self._add(r, "sell", res)
+            self._add_in(r, clip, "sell", res)
             y += 24
         # buy materials you can't make yet (silicon, lithium)
         for res in config.BUYABLE:
@@ -263,40 +363,9 @@ class UI:
                          enabled=econ.jammies >= price)
             surf.blit(self.font_s.render(f"-{price}j", True, config.COL_TEXT_DIM),
                       (r.right - 46, r.y + 5))
-            self._add(r, "buy_material", res)
+            self._add_in(r, clip, "buy_material", res)
             y += 24
-        y += 6
-
-        # --- BUILD -------------------------------------------------------------
-        surf.blit(self.font_b.render("BUILD", True, config.COL_TEXT), (x, y)); y += 22
-        for bt, info in config.BUILDINGS.items():
-            if not info.get("buildable", True):      # e.g. the pre-placed depot
-                continue
-            r = pygame.Rect(x, y, w, 38)
-            on = game.tool == "build" and game.build_choice == bt
-            aff = game.economy.can_afford(info["cost"])
-            self._button(surf, r, info["name"], mouse, on=on, sub=self._cost_str(info["cost"]))
-            if not aff:
-                surf.blit(self.font_s.render("!", True, (230, 120, 120)), (r.right - 12, r.y + 4))
-            self._add(r, "build_select", bt)
-            y += 40
-
-        # --- VEHICLES ----------------------------------------------------------
-        y += 4
-        surf.blit(self.font_b.render("VEHICLES", True, config.COL_TEXT), (x, y)); y += 22
-        ws = game.has_workshop()
-        for vt, info in config.VEHICLES.items():
-            r = pygame.Rect(x, y, w, 30)
-            aff = ws and game.economy.can_afford(info["cost"])
-            self._button(surf, r, info["name"], mouse, enabled=aff, sub=self._cost_str(info["cost"]))
-            self._add(r, "manufacture", vt)
-            y += 32
-
-        y += 4
-        r = pygame.Rect(x, y, w, 28)
-        aff = game.economy.can_afford(config.RECRUIT_COST)
-        self._button(surf, r, "Recruit Worker", mouse, enabled=aff, sub=self._cost_str(config.RECRUIT_COST))
-        self._add(r, "recruit")
+        return y
 
     # ------------------------------------------------------------------ bottom bar
     def _draw_bottombar(self, surf, game, mouse):
@@ -443,6 +512,13 @@ class UI:
     def point_in_ui(self, pos):
         return any(p.collidepoint(pos) for p in self._panels)
 
+    def point_in_panel(self, pos):
+        """True over the scrollable side panel (so the wheel scrolls, not zooms)."""
+        return self._side_panel_rect is not None and self._side_panel_rect.collidepoint(pos)
+
+    def scroll_panel(self, dy):
+        self.panel_scroll = max(0.0, min(self._panel_max_scroll, self.panel_scroll + dy))
+
     def handle_click(self, pos, game):
         for b in self.buttons:
             if b["rect"].collidepoint(pos):
@@ -453,6 +529,12 @@ class UI:
     def _do(self, action, arg, game):
         if action == "tool":
             game.tool = arg
+            if arg == "build":            # jump straight to the building menu
+                self.panel_tab = "build"
+                self.panel_scroll = 0.0
+        elif action == "panel_tab":
+            self.panel_tab = arg
+            self.panel_scroll = 0.0
         elif action == "speed":
             game.speed_index = arg
             game.paused = False

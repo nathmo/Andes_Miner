@@ -44,3 +44,5 @@ All items below are implemented (one commit each). Kept as a record.
 -> [x] load menu to pick a save; rolling automatic backups (every 2 min; keep 2/4/8/16/32/64/128/256-min snapshots).
 
 -> [x] Splashscreen: far zoom on the summit with slow clouds; title (Andes Mining Corp) + press space to start; SPACE zooms in to 0,0 and the game starts at x1.
+
+-> [x] side panel buttons ran off-screen: split it into Build / Fleet / Trade tabs (money+coffee always in the top bar; wheel scrolls a tab if it overflows).

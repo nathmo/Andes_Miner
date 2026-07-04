@@ -32,8 +32,11 @@ class InputHandler:
                 self._mouse_move(e, game, ui, camera)
             elif e.type == pygame.MOUSEWHEEL:
                 mx, my = pygame.mouse.get_pos()
-                factor = config.ZOOM_STEP if e.y > 0 else 1.0 / config.ZOOM_STEP
-                camera.zoom_at(mx, my, factor)
+                if ui.point_in_panel((mx, my)):
+                    ui.scroll_panel(-e.y * 40)      # scroll the side panel, don't zoom
+                else:
+                    factor = config.ZOOM_STEP if e.y > 0 else 1.0 / config.ZOOM_STEP
+                    camera.zoom_at(mx, my, factor)
             elif e.type == pygame.KEYDOWN:
                 self._key(e, game)
         return None
