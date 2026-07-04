@@ -170,7 +170,12 @@ BUILDINGS = {
                         ], note="Crushed (or raw) ore -> metal, double yield"),
     "planner":     dict(name="Mining Planner", cost={"iron": 10, "copper": 6}, color=(88, 158, 168),
                         process=None, note="Drag-select ore: auto-mines and auto-roads out to reach it"),
+    "cable_station": dict(name="Cable Car Station", cost={"iron": 4, "copper": 2}, color=(120, 150, 172),
+                        process=None, on="road",
+                        note="On a road, far out: haulers unload here and it cables ore to HQ"),
 }
+
+COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 
 # ------------------------------------------------------------------ auto-planner
 # With a built Mining Planner, box-selecting rock also plans dig+road corridors

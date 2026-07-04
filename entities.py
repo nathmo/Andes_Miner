@@ -199,9 +199,10 @@ class Agent:
                     game.jobs.release(nxt, cooldown=1.0)   # unreachable, give back
             if self.carrying:
                 self.phase = "deliver"
-                p = pathfinding.find_path(world, self.hex, world.hq)
+                dest = game.nearest_dropoff(self.hex)   # HQ or a nearer cable station
+                p = pathfinding.find_path(world, self.hex, dest)
                 if p is None:
-                    p, _ = pathfinding.find_path_adjacent(world, self.hex, world.hq)
+                    p, _ = pathfinding.find_path_adjacent(world, self.hex, dest)
                 self._begin_path(p or [])
                 return
             self.state = "IDLE"

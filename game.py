@@ -267,10 +267,26 @@ class Game:
         if self.tool == "build":
             if t.building is not None:
                 return False
-            if t.state not in (EXCAVATED, ROAD):
+            info = config.BUILDINGS[self.build_choice]
+            if info.get("on") == "road":
+                if t.state != ROAD:            # cable stations sit on the road
+                    return False
+            elif t.state not in (EXCAVATED, ROAD):
                 return False
-            return self.economy.can_afford(config.BUILDINGS[self.build_choice]["cost"])
+            return self.economy.can_afford(info["cost"])
         return False
+
+    def nearest_dropoff(self, hexpos):
+        """Where a hauler unloads: HQ, or a nearer built Cable Car Station (which
+        cables the load straight to HQ). Shorter trips = more throughput far out."""
+        best = self.world.hq
+        bd = hexgrid.axial_distance(hexpos, self.world.hq)
+        for b in self.buildings:
+            if b.built and b.btype == "cable_station":
+                d = hexgrid.axial_distance(hexpos, (b.q, b.r))
+                if d < bd:
+                    bd, best = d, (b.q, b.r)
+        return best
 
     def place(self, q, r):
         if not self.can_place_here(q, r):

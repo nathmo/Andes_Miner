@@ -74,7 +74,8 @@ class Renderer:
                 cx, cy = cam.world_to_screen(wx, wy)
                 self._draw_tile(surface, tile, cx, cy, size, show_mine_hint, game)
 
-        # Drops (ore / rubble piles), buildings, agents on top.
+        # Cables (under buildings), then drops, buildings, agents on top.
+        self._draw_cables(surface, game, cam)
         self._draw_buildings(surface, game, cam, size)
         self._draw_drops(surface, game, cam, size, q_lo, q_hi, r_lo, r_hi)
         self._draw_agents(surface, game, cam, size)
@@ -172,6 +173,20 @@ class Renderer:
                     ox = cx + (i - (n - 1) / 2.0) * rad * 0.95
                     pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
                     pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
+
+    # ------------------------------------------------------------------ cables
+    def _draw_cables(self, surface, game, cam):
+        """A straight cable line from each Cable Car Station back to the HQ house."""
+        stations = [b for b in game.buildings if b.built and b.btype == "cable_station"]
+        if not stations:
+            return
+        hx, hy = hexgrid.hex_to_pixel(*game.world.hq, config.HEX_SIZE)
+        hqx, hqy = cam.world_to_screen(hx, hy)
+        for b in stations:
+            wx, wy = hexgrid.hex_to_pixel(b.q, b.r, config.HEX_SIZE)
+            sx, sy = cam.world_to_screen(wx, wy)
+            pygame.draw.line(surface, config.COL_CABLE, (hqx, hqy), (sx, sy), 2)
+            pygame.draw.circle(surface, config.COL_CABLE, (int(sx), int(sy)), 3)
 
     # ------------------------------------------------------------------ buildings
     def _draw_buildings(self, surface, game, cam, size):
