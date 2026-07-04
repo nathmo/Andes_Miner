@@ -221,6 +221,15 @@ BUILDING_POWER = {               # power drawn while a building is processing
 BATTERY_CAPACITY = 60.0          # energy stored per Grid Battery
 BATTERY_CHARGE_EFF = 0.9        # fraction of surplus solar that makes it into storage
 
+# Grid carbon intensity (kg CO2 / MWh). Starts dirty; reinjecting surplus clean
+# power greens it for everyone, otherwise it drifts back toward the dirty start.
+GRID_CARBON_START = 420.0
+CARBON_MIN = 30.0
+CARBON_EXPORT_DECAY = 0.9       # greening per unit of exported power
+CARBON_REVERT = 0.5            # re-dirtying per second when not exporting
+CO2_SCALE = 0.0009             # kg CO2 per (power-second * carbon intensity)
+EMISS_HISTORY = 64             # samples kept for the emissions graph
+
 # ------------------------------------------------------------------ auto-planner
 # With a built Mining Planner, box-selecting rock also plans dig+road corridors
 # out to ore beyond road range. Caps keep a huge selection from stalling a frame.

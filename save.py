@@ -41,6 +41,8 @@ def save_game(game, path=config.SAVE_FILE):
         "price_mult": game.economy.price_mult,
         "energy_bought": game.economy.energy_bought,
         "battery_charge": game.economy.battery_charge,
+        "grid_carbon": game.economy.grid_carbon,
+        "emissions_total": game.economy.emissions_total,
         "wages_due": game.wages_due,
         "num_workers": game.num_workers,
         "vehicles": [{"kind": v.kind, "q": v.hex[0], "r": v.hex[1]} for v in game.vehicles],
@@ -106,6 +108,8 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.economy.coffee = data.get("coffee", config.COFFEE_START)
     game.economy.energy_bought = data.get("energy_bought", 0.0)
     game.economy.battery_charge = data.get("battery_charge", 0.0)
+    game.economy.grid_carbon = data.get("grid_carbon", config.GRID_CARBON_START)
+    game.economy.emissions_total = data.get("emissions_total", 0.0)
     for res, m in data.get("price_mult", {}).items():
         if res in game.economy.price_mult:
             game.economy.price_mult[res] = m

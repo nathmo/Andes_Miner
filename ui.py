@@ -98,7 +98,7 @@ class UI:
             return
         from economy import TRADEABLE
         econ = game.economy
-        pw, ph = 430, 44 + 18 * len(TRADEABLE)
+        pw, ph = 430, 44 + 18 * len(TRADEABLE) + 56
         box = pygame.Rect(self.sw // 2 - pw // 2, self.sh // 2 - ph // 2, pw, ph)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL, box, border_radius=8)
@@ -119,6 +119,24 @@ class UI:
             self._sparkline(surf, econ.price_hist.get(res, []),
                             pygame.Rect(box.x + 210, y - 1, 200, 15), col)
             y += 18
+        # --- grid carbon intensity + emissions over time (item 27) ------------
+        y += 6
+        pygame.draw.line(surf, config.COL_PANEL_EDGE, (box.x + 12, y), (box.right - 12, y))
+        y += 8
+        frac = (econ.grid_carbon - config.CARBON_MIN) / max(1.0, config.GRID_CARBON_START - config.CARBON_MIN)
+        frac = max(0.0, min(1.0, frac))
+        ccol = (int(90 + 150 * frac), int(200 - 120 * frac), 90)
+        surf.blit(self.font_s.render(f"Grid carbon: {econ.grid_carbon:.0f} kg/MWh", True, ccol),
+                  (box.x + 14, y))
+        bar = pygame.Rect(box.x + 210, y + 2, 200, 9)
+        pygame.draw.rect(surf, (40, 44, 52), bar)
+        pygame.draw.rect(surf, ccol, (bar.x, bar.y, int(bar.w * frac), bar.h))
+        y += 18
+        surf.blit(self.font_s.render(f"Emissions: {econ.emissions_total:.0f} kg  "
+                                     f"(now {econ.emissions_rate:.1f}/s)", True, (210, 160, 140)),
+                  (box.x + 14, y))
+        self._sparkline(surf, econ.emissions_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), (210, 150, 120))
+        y += 18
 
     # ------------------------------------------------------------------ top bar
     def _draw_topbar(self, surf, game, mouse):
@@ -193,6 +211,9 @@ class UI:
             if econ.battery_capacity > 0:
                 btxt = f"Battery {econ.battery_charge:.0f}/{econ.battery_capacity:.0f}"
                 surf.blit(self.font_s.render(btxt, True, (130, 205, 140)), (x, y)); y += 15
+        if econ.brownout:
+            surf.blit(self.font_s.render("MACHINES STOPPED (no power/cash)", True, (240, 130, 110)),
+                      (x, y)); y += 15
         rC = pygame.Rect(x, y, w, 26)
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
         self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,

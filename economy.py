@@ -29,6 +29,14 @@ class Economy:
         self.grid_draw = 0.0            # power actually bought from the grid this tick
         self.battery_charge = 0.0       # energy stored in Grid Batteries
         self.battery_capacity = 0.0     # total storage from built batteries
+        self.export_power = 0.0         # clean power reinjected to the grid this tick
+        self.brownout = False           # a machine couldn't be powered (e.g. no cash)
+
+        # carbon: grid intensity + cumulative emissions from bought grid power
+        self.grid_carbon = config.GRID_CARBON_START
+        self.emissions_total = 0.0
+        self.emissions_rate = 0.0
+        self.emissions_hist = [0.0]
 
         # stock market: per-resource price multiplier + recent price history
         self.price_mult = {res: 1.0 for res in TRADEABLE}
@@ -81,6 +89,9 @@ class Economy:
             hist.append(self.sell_price(res))
             if len(hist) > config.PRICE_HISTORY:
                 hist.pop(0)
+        self.emissions_hist.append(self.emissions_total)
+        if len(self.emissions_hist) > config.EMISS_HISTORY:
+            self.emissions_hist.pop(0)
 
     def buy(self, res, batch=None):
         """Buy `batch` units of a material with jammies. Returns units bought."""
@@ -179,16 +190,35 @@ class Economy:
             else:
                 b.powered = False          # brownout
 
+        self.brownout = any(
+            (not b.powered) and b.active and b.recipes
+            and (b.current is not None or self._pick_recipe(b) is not None)
+            for b in buildings)
+
         # source the used power: solar -> battery -> grid
         from_solar = min(used, solar)
         from_battery = min(used - from_solar, battery_avail)
         from_grid = used - from_solar - from_battery
         self.battery_charge -= from_battery * dt
-        surplus_solar = max(0.0, solar - used)          # unused solar tops up storage
-        self.battery_charge = min(self.battery_capacity,
-                                  self.battery_charge + surplus_solar * dt * config.BATTERY_CHARGE_EFF)
+
+        # surplus solar charges the battery; overflow is exported (greens the grid)
+        surplus = max(0.0, solar - used) * dt
+        room = self.battery_capacity - self.battery_charge
+        stored = min(room, surplus * config.BATTERY_CHARGE_EFF)
+        self.battery_charge += stored
+        exported = max(0.0, surplus - stored / config.BATTERY_CHARGE_EFF)
+        self.export_power = exported / dt if dt > 0 else 0.0
+
         self.jammies -= from_grid * dt * config.KWH_PRICE
         self.energy_bought += from_grid * dt
+        self.emissions_rate = from_grid * self.grid_carbon * config.CO2_SCALE   # kg/s
+        self.emissions_total += self.emissions_rate * dt
+        if self.export_power > 0:
+            self.grid_carbon = max(config.CARBON_MIN,
+                                   self.grid_carbon - self.export_power * dt * config.CARBON_EXPORT_DECAY)
+        else:
+            self.grid_carbon = min(config.GRID_CARBON_START,
+                                   self.grid_carbon + dt * config.CARBON_REVERT)
         self.power_demand = used
         self.solar_supply = solar
         self.grid_draw = from_grid
