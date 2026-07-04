@@ -122,23 +122,25 @@ RECRUIT_COST = {"iron": 2}       # cost to hire one more worker
 # Vehicle stats. jobs: which job kinds this unit can perform.
 #   mine_mult / clean_mult scale the base times (higher = faster).
 #   speed px/sec, carry = ore stacks per haul trip.
+# Tiers get MUCH pricier and a bit slower as they grow (item 16), so a single
+# top machine can't saturate everything — you're nudged to run several.
 VEHICLES = {
-    "transporter_s": dict(name="Small Transporter", tier="small", speed=95,  carry=1, mine_mult=0, clean_mult=0, jobs=("HAUL",),
+    "transporter_s": dict(name="Small Transporter", tier="small", speed=85,  carry=1, mine_mult=0, clean_mult=0, jobs=("HAUL",),
                           cost={"iron": 2}, color=(90, 150, 220)),
-    "miner_s":       dict(name="Small Mining Machine", tier="small", speed=70, carry=0, mine_mult=3, clean_mult=0, mine_reach=2, jobs=("MINE",),
+    "miner_s":       dict(name="Small Mining Machine", tier="small", speed=64, carry=0, mine_mult=2.5, clean_mult=0, mine_reach=2, jobs=("MINE",),
                           cost={"iron": 3, "copper": 1}, color=(220, 150, 80)),
-    "dozer_s":       dict(name="Small Bulldozer", tier="small", speed=80, carry=0, mine_mult=0, clean_mult=3, jobs=("CLEAN",),
+    "dozer_s":       dict(name="Small Bulldozer", tier="small", speed=72, carry=0, mine_mult=0, clean_mult=2.5, jobs=("CLEAN",),
                           cost={"iron": 2, "copper": 1}, color=(220, 200, 90)),
-    "truck_m":       dict(name="Medium Truck", tier="medium", speed=115, carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
-                          cost={"iron": 5, "copper": 2}, color=(70, 120, 200)),
-    "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=80, carry=0, mine_mult=6, clean_mult=0, mine_reach=3, jobs=("MINE",),
-                          cost={"iron": 6, "copper": 3}, color=(230, 130, 60)),
-    "dozer_m":       dict(name="Medium Bulldozer", tier="medium", speed=100, carry=0, mine_mult=0, clean_mult=6, jobs=("CLEAN",),
-                          cost={"iron": 5, "copper": 2}, color=(230, 210, 70)),
-    "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=95, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
-                          cost={"iron": 5, "copper": 2}, color=(140, 142, 150)),
-    "mega":          dict(name="Mega Machine", tier="big", speed=100, carry=9, mine_mult=8, clean_mult=8, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
-                          cost={"iron": 15, "copper": 10}, color=(200, 90, 200)),
+    "truck_m":       dict(name="Medium Truck", tier="medium", speed=105, carry=3, mine_mult=0, clean_mult=0, jobs=("HAUL",),
+                          cost={"iron": 6, "copper": 3}, color=(70, 120, 200)),
+    "excavator_m":   dict(name="Medium Excavator", tier="medium", speed=74, carry=0, mine_mult=4.5, clean_mult=0, mine_reach=3, jobs=("MINE",),
+                          cost={"iron": 9, "copper": 5}, color=(230, 130, 60)),
+    "dozer_m":       dict(name="Medium Bulldozer", tier="medium", speed=90, carry=0, mine_mult=0, clean_mult=4.5, jobs=("CLEAN",),
+                          cost={"iron": 8, "copper": 4}, color=(230, 210, 70)),
+    "paver_m":       dict(name="Medium Road Paver", tier="medium", speed=88, carry=1, mine_mult=0, clean_mult=0, jobs=("BUILD_ROAD",),
+                          cost={"iron": 8, "copper": 4}, color=(140, 142, 150)),
+    "mega":          dict(name="Mega Machine", tier="big", speed=92, carry=9, mine_mult=6, clean_mult=6, mine_reach=4, jobs=("MINE", "CLEAN", "HAUL"),
+                          cost={"iron": 30, "copper": 22}, color=(200, 90, 200)),
 }
 
 # ------------------------------------------------------------------ buildings
@@ -151,22 +153,22 @@ BUILDINGS = {
                         process=None, note="Unlocks vehicle manufacturing"),
     "oven":        dict(name="Simple Oven", cost={"rubble": 5}, color=(180, 110, 80),
                         process=[
-                            dict(inp={"iron_ore": 2}, out={"iron": 1}, time=4.0),
-                            dict(inp={"copper_ore": 2}, out={"copper": 1}, time=4.0),
+                            dict(inp={"iron_ore": 2}, out={"iron": 1}, time=6.0),
+                            dict(inp={"copper_ore": 2}, out={"copper": 1}, time=6.0),
                         ], note="Ore -> metal, poor yield (2:1)"),
-    "crusher":     dict(name="Crusher", cost={"iron": 4, "copper": 2}, color=(130, 120, 110),
+    "crusher":     dict(name="Crusher", cost={"iron": 6, "copper": 3}, color=(130, 120, 110),
                         process=[
-                            dict(inp={"iron_ore": 1}, out={"iron_crushed": 1}, time=2.0),
-                            dict(inp={"copper_ore": 1}, out={"copper_crushed": 1}, time=2.0),
+                            dict(inp={"iron_ore": 1}, out={"iron_crushed": 1}, time=3.0),
+                            dict(inp={"copper_ore": 1}, out={"copper_crushed": 1}, time=3.0),
                         ], note="Crushes ore to boost furnace yield"),
-    "arc_furnace": dict(name="Arc Furnace", cost={"iron": 8, "copper": 4}, color=(200, 120, 90),
+    "arc_furnace": dict(name="Arc Furnace", cost={"iron": 12, "copper": 6}, color=(200, 120, 90),
                         process=[
-                            dict(inp={"iron_crushed": 1}, out={"iron": 1}, time=3.0),
-                            dict(inp={"copper_crushed": 1}, out={"copper": 1}, time=3.0),
-                            dict(inp={"iron_ore": 1}, out={"iron": 1}, time=4.0),
-                            dict(inp={"copper_ore": 1}, out={"copper": 1}, time=4.0),
+                            dict(inp={"iron_crushed": 1}, out={"iron": 1}, time=4.0),
+                            dict(inp={"copper_crushed": 1}, out={"copper": 1}, time=4.0),
+                            dict(inp={"iron_ore": 1}, out={"iron": 1}, time=6.0),
+                            dict(inp={"copper_ore": 1}, out={"copper": 1}, time=6.0),
                         ], note="Crushed (or raw) ore -> metal, double yield"),
-    "planner":     dict(name="Mining Planner", cost={"iron": 6, "copper": 4}, color=(88, 158, 168),
+    "planner":     dict(name="Mining Planner", cost={"iron": 10, "copper": 6}, color=(88, 158, 168),
                         process=None, note="Drag-select ore: auto-mines and auto-roads out to reach it"),
 }
 
