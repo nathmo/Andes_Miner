@@ -8,22 +8,33 @@ onto the target itself.
 """
 
 import heapq
+
+import config
 import hexgrid
+
+# Cost to ENTER a tile is the inverse of its terrain speed, so A* minimises travel
+# TIME, not hop count: roads are cheap, loose rubble dear. The heuristic is scaled
+# by the cheapest possible step (fastest terrain) to stay admissible.
+_MIN_STEP = 1.0 / max(config.TERRAIN_SPEED.values())
+
+
+def _enter_cost(world, q, r):
+    return 1.0 / config.TERRAIN_SPEED.get(world.get_tile(q, r).state, 1.0)
 
 
 def _heuristic(a, b):
-    # Admissible-ish: real moves are diagonal, so axial distance underestimates.
-    return hexgrid.axial_distance(a, b)
+    return hexgrid.axial_distance(a, b) * _MIN_STEP
 
 
 def find_path(world, start, goal, max_expand=4000):
-    """A* from start (q,r) to goal (q,r), stepping only through passable tiles.
-    Returns a list of (q,r) from the tile AFTER start to goal, or None."""
+    """Time-optimal A* from start (q,r) to goal (q,r) through passable tiles,
+    preferring faster terrain (roads). Returns the list of (q,r) from the tile
+    AFTER start to goal, or None."""
     if start == goal:
         return []
-    open_heap = [(0, start)]
+    open_heap = [(0.0, start)]
     came = {start: None}
-    gscore = {start: 0}
+    gscore = {start: 0.0}
     expanded = 0
     while open_heap:
         _, cur = heapq.heappop(open_heap)
@@ -37,7 +48,7 @@ def find_path(world, start, goal, max_expand=4000):
             nxt = (nq, nr)
             if nxt != goal and not world.get_tile(nq, nr).passable():
                 continue
-            ng = gscore[cur] + 1
+            ng = gscore[cur] + _enter_cost(world, nq, nr)
             if nxt not in gscore or ng < gscore[nxt]:
                 gscore[nxt] = ng
                 came[nxt] = cur
