@@ -19,17 +19,24 @@ Tiles are pointy-top hexes shaded as isometric cubes. The two **vertical** edges
 edges (NE/NW/SE/SW), so every step reads as climbing stairs up or down the
 slope. The map still connects: going "east" is a NE→SE zig-zag.
 
+Press **SPACE** at the summit splash to zoom in and start.
+
 ## Controls
-- **Mine/Clean tool** — LMB marks rock for mining (must be within 2 tiles of a
-  road); drag to box-mark many. On rubble it orders a clean-up. RMB cancels.
-- **Road tool** — LMB (or drag) lays road on excavated tiles.
+- **Mine/Clean tool** — LMB marks rock for mining (within your machines' reach of
+  a road); drag to box-mark many. With a **Mining Planner** built, box-selecting
+  ore beyond reach auto-plans the dig + road corridor out to it. On rubble it
+  orders a clean-up. RMB cancels.
+- **Road tool** — LMB (or drag) plans road on excavated tiles; a builder carries
+  rubble to the site and lays it.
 - **Build tool** — pick a building in the right panel, LMB to place it.
+- **Market button** — live prices, trend sparklines, grid carbon + emissions graph.
 - **Pan tool / MMB / drag** — pan. **WASD / arrows** also pan. **Wheel** zooms.
 - **Home button / H** — recenter the view on HQ so panning can't lose you.
-- **Hover any tile** — the info box shows rock hardness (Soft/Medium/Hard), what
-  ore it holds (iron/copper/none), and whether it's in mining range.
-- **Click a building** — opens its panel; toggle it on/off there.
-- **Space** pause · **1 / 2 / 3** speed · **F5** save · **F9** load · **Esc** pan tool.
+- **Hover any tile** — the info box names it (e.g. "Diorite rubble", "Excavated
+  basalt"), shows hardness and what solid rock drops, mining range, and any piles
+  sitting on it.
+- **Click a building** — opens its panel; toggle it, or set a Warehouse's auto-sell.
+- **Space** pause · **1 / 2 / 3** speed · **F5** save · **F9** load/roll-back menu · **Esc** pan tool.
 
 ## Loop
 Cleaning rubble yields **rubble** — the bootstrap material. Your first **Simple
@@ -50,12 +57,29 @@ work a machine could do). Lay **roads** to move faster; loose **rubble** slows
 everyone down. And once you build the **Arc Furnace**, the poor-yield **Oven**
 auto-stops so ore isn't wasted (you can force it back on from its panel).
 
+## The bigger game — goal, market, energy
+- **Goal.** Villages are scattered across the slope; the objective is to reach and
+  link each one to your road network (top bar tracks progress), rewarding lateral
+  exploration.
+- **Market.** Sell any resource for jammies and buy materials you can't yet make
+  (silicon, lithium — needed for the better machines). Prices drift on a small
+  stock market: your own trading and a random walk move them, floored so you can
+  always raise coffee money.
+- **Energy.** Machines draw power. Buy it from the grid (auto, with jammies) or
+  build **Solar Arrays** — a full material chain runs rubble → SiO2 → solar panels,
+  and lithium (from spodumene via an Electrolysis Plant) feeds **Battery Factories**
+  and **Grid Batteries** that store daytime solar for the night. Reinjecting clean
+  surplus greens the grid's carbon intensity for everyone; run out of cash and the
+  machines stop (workers keep going). A **day/night cycle** dims the world and sets
+  solar yield. A **Warehouse** auto-sells to hold cash and coffee above thresholds.
+
 ## Money & upkeep — jammies & iced coffee
 Sell any stockpiled resource for **jammies** (the game's money) from the MARKET
-panel, at any time. Spend jammies on **iced coffee**. Every payday your workers
-drink coffee as their salary — run out and the crew goes **on strike** until you
-can pay them again, so keep selling to keep the coffee flowing. Prices, payday
-interval, and coffee cost are all in [`config.py`](config.py).
+panel. Spend jammies on **iced coffee** — your workers' wages. Wages are
+**action-based, not timed**: a worker drinks one iced coffee for roughly every ten
+jobs it finishes, so idle workers cost nothing and there's no clock pressure. Run
+out of coffee and that worker pauses until you can pay it. Prices and rates all
+live in [`config.py`](config.py).
 
 ## Download & play
 CI builds a Windows `.exe`, a Debian/Ubuntu `.deb`, and a macOS `.app` on every
@@ -118,6 +142,7 @@ Every number (mining times, ore yields, costs, speeds, colours) lives in
 [`config.py`](config.py). Change balance there without touching game logic.
 
 ## Layout
-`main` loop · `game` wiring · `world`/`worldgen`/`tiles` map · `hexgrid` math ·
-`camera` · `render` · `pathfinding` · `jobs` · `entities` · `buildings` ·
-`economy` · `ui` · `input` · `assets` · `save`.
+`main` loop · `splash` intro · `game` wiring · `world`/`worldgen`/`tiles` map ·
+`hexgrid` math · `camera` · `render` · `environment` (sky) · `pathfinding` ·
+`jobs` · `entities` · `buildings` · `economy` (stockpile/market/energy) · `ui` ·
+`input` · `assets` · `save` (+ rolling backups).
