@@ -46,6 +46,8 @@ class Agent:
         self.work_timer = 0.0
         self.work_needed = 0.0
         self._target_px = None
+        self.actions = 0                # jobs finished toward the next iced coffee
+        self.striking = False           # paused: owed coffee the stockpile can't cover
 
     # ------------------------------------------------------------------ helpers
     def job_kinds(self):
@@ -164,6 +166,7 @@ class Agent:
                     game.economy.add(self.carrying["type"] + "_ore", self.carrying["amount"])
                     game.log(f"+{self.carrying['amount']} {self.carrying['type']} ore")
                     self.carrying = None
+                    game.register_action(self)
                 self._finish(game, done=True)
                 return
 
@@ -210,6 +213,7 @@ class Agent:
                 t.building.built = True
                 t.building.progress = 1.0
                 game.log(f"{config.BUILDINGS[t.building.btype]['name']} built")
+        game.register_action(self)
         self._finish(game, done=True)
 
     def _finish(self, game, done):

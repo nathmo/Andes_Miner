@@ -42,9 +42,8 @@ class Game:
         self.speed_index = 0
         self.paused = False
 
-        # upkeep (salary paid in iced coffee)
-        self._salary_t = 0.0
-        self.wages_due = False        # True = crew on strike until paid
+        # upkeep (salary paid in iced coffee, per completed job — register_action)
+        self.wages_due = False        # True while any worker is paused unpaid
         self.selected_building = None
 
         # transient on-screen messages
@@ -92,34 +91,36 @@ class Game:
     def update(self, sim_dt, real_dt):
         if not self.paused and sim_dt > 0:
             self.jobs.update(sim_dt)
-            self._tick_salary(sim_dt)
-            if not self.wages_due:              # crew works only if paid
-                for a in self.iter_active_agents():
-                    a.update(sim_dt, self)
+            was_striking = self.wages_due
+            for a in self.iter_active_agents():
+                if a.striking:                  # owed coffee — try to back-pay
+                    if self.economy.coffee >= 1:
+                        self.economy.coffee -= 1
+                        a.striking = False
+                    else:
+                        continue                # this worker waits, unpaid
+                a.update(sim_dt, self)
+            self.wages_due = any(a.striking for a in self.iter_active_agents())
+            if self.wages_due and not was_striking:
+                self.log("Out of iced coffee — a worker paused. Buy more to keep going.")
+            elif was_striking and not self.wages_due:
+                self.log("Wages paid — crew back to work")
             self.economy.update(sim_dt, self.buildings)
         self._update_messages(real_dt)
         self._autosave_t += real_dt
 
     # ------------------------------------------------------------------ salary
-    def _tick_salary(self, dt):
-        self._salary_t += dt
-        if self._salary_t >= config.SALARY_INTERVAL:
-            self._salary_t -= config.SALARY_INTERVAL
-            if self._pay_wages():
-                self.log(f"Payday: crew drank {self.num_workers} iced coffee")
+    def register_action(self, agent):
+        """A worker just finished a job. Every WAGE_ACTIONS_PER_COFFEE jobs it
+        drinks one iced coffee as its wage; if the stockpile is empty it pauses
+        (strikes) until coffee is available again."""
+        agent.actions += 1
+        if agent.actions >= config.WAGE_ACTIONS_PER_COFFEE:
+            agent.actions -= config.WAGE_ACTIONS_PER_COFFEE
+            if self.economy.coffee >= 1:
+                self.economy.coffee -= 1
             else:
-                self.wages_due = True
-                self.log("Crew on strike — buy iced coffee to pay wages!")
-        elif self.wages_due and self._pay_wages():   # back-pay to end a strike
-            self.wages_due = False
-            self.log("Wages paid — crew back to work")
-
-    def _pay_wages(self):
-        need = self.num_workers * config.SALARY_COFFEE_PER_WORKER
-        if self.economy.coffee >= need:
-            self.economy.coffee -= need
-            return True
-        return False
+                agent.striking = True
 
     def sim_multiplier(self):
         return 0.0 if self.paused else config.SPEED_STEPS[self.speed_index]

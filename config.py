@@ -187,8 +187,10 @@ START_INVENTORY = {"iron": 0, "copper": 0}
 
 # ------------------------------------------------------------------ money & upkeep
 # Sell any stockpiled resource for "jammies" (the game's money). Spend jammies on
-# iced coffee, which your workers drink as their salary each payday. Run out of
-# coffee and the crew goes on strike until you can pay them again.
+# iced coffee, which your workers drink as their salary. Wages are ACTION-based,
+# not timed: a worker drinks 1 iced coffee for every WAGE_ACTIONS_PER_COFFEE jobs
+# it personally completes, so idle (or striking) workers cost nothing and there
+# is no clock pressure. Run out of coffee and a worker pauses until you can pay.
 JAMMIES_START = 100
 SELL_BATCH = 5                    # units sold per click
 SELL_PRICES = {                  # jammies earned per unit sold
@@ -198,5 +200,4 @@ SELL_PRICES = {                  # jammies earned per unit sold
 COFFEE_START = 20                 # iced coffees in stock at the start
 COFFEE_PRICE = 1                 # jammies per iced coffee
 COFFEE_BATCH = 3                 # coffees bought per click
-SALARY_INTERVAL = 60.0          # seconds between paydays
-SALARY_COFFEE_PER_WORKER = 1    # iced coffees each worker drinks per payday
+WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it drinks

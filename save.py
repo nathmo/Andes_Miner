@@ -38,7 +38,6 @@ def save_game(game, path=config.SAVE_FILE):
         "inv": game.economy.inv,
         "jammies": game.economy.jammies,
         "coffee": game.economy.coffee,
-        "salary_t": game._salary_t,
         "wages_due": game.wages_due,
         "num_workers": game.num_workers,
         "vehicles": [{"kind": v.kind, "q": v.hex[0], "r": v.hex[1]} for v in game.vehicles],
@@ -97,7 +96,6 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.economy.inv = {res: data["inv"].get(res, 0) for res in config.RESOURCES}
     game.economy.jammies = data.get("jammies", config.JAMMIES_START)
     game.economy.coffee = data.get("coffee", config.COFFEE_START)
-    game._salary_t = data.get("salary_t", 0.0)
     game.wages_due = data.get("wages_due", False)
 
     # agents
