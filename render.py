@@ -14,6 +14,7 @@ import pygame
 import config
 import hexgrid
 import assets
+from environment import Environment
 from tiles import ROCK, RUBBLE, EXCAVATED, ROAD
 from jobs import CLEAN, BUILD_ROAD
 
@@ -32,6 +33,8 @@ class Renderer:
         self.font = pygame.font.SysFont("consolas", 14)
         self.font_small = pygame.font.SysFont("consolas", 11)
         self._sprite_cache = {}      # (key, target_w) -> scaled Surface
+        self.env = None              # sky ambiance (clouds + birds), lazily created
+        self._last_ticks = None
 
     def _blit_sprite(self, surface, key, sprite, cx, cy, target_w):
         tw = max(1, int(target_w))
@@ -80,6 +83,9 @@ class Renderer:
         self._draw_villages(surface, game, cam, size)
         self._draw_drops(surface, game, cam, size, q_lo, q_hi, r_lo, r_hi)
         self._draw_agents(surface, game, cam, size)
+
+        # Sky ambiance: drifting clouds + birds (dimmed by the night overlay below).
+        self._draw_sky(surface, game, cam)
 
         # Placement / selection previews.
         self._draw_hover(surface, game, cam, size)
@@ -182,6 +188,15 @@ class Renderer:
                     ox = cx + (i - (n - 1) / 2.0) * rad * 0.95
                     pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
                     pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
+
+    def _draw_sky(self, surface, game, cam):
+        if self.env is None:
+            self.env = Environment(game.world.seed)
+        now = pygame.time.get_ticks()
+        dt = 0.0 if self._last_ticks is None else (now - self._last_ticks) / 1000.0
+        self._last_ticks = now
+        self.env.update(dt, cam)
+        self.env.draw(surface, cam)
 
     def _night_overlay(self, size, alpha):
         """Cached dark-blue overlay used to dim the world at night."""
