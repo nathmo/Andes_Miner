@@ -239,11 +239,38 @@ class Economy:
         self.solar_supply = solar
         self.grid_draw = from_grid
 
+    def _inputs_available(self, inp):
+        """True if every input is in stock AND consuming it keeps each resource at
+        or above its configured reserve floor (config.INPUT_RESERVE). This is what
+        stops the Silica Kiln from draining rubble the roads/buildings still need."""
+        for res, n in inp.items():
+            reserve = config.INPUT_RESERVE.get(res, 0)
+            if self.inv.get(res, 0) - n < reserve:
+                return False
+        return True
+
     def _pick_recipe(self, b):
-        """First recipe (in config order) whose inputs are all in stock."""
+        """First recipe (in config order) that's runnable — inputs in stock and
+        above their reserve floor."""
         for i, recipe in enumerate(b.recipes):
-            if self.can_afford(recipe["inp"]):
+            if self._inputs_available(recipe["inp"]):
                 return i
+        return None
+
+    def reserve_block(self, b):
+        """For UI status: if a built, enabled, non-obsolete processing building is
+        idle *specifically* because a reserved input (e.g. rubble) is at its floor,
+        return (res, reserve); else None. None also when it's actively running or
+        idle for some other reason (out of ore, no power)."""
+        if not b.recipes or b.current is not None:
+            return None
+        if self._pick_recipe(b) is not None:     # a recipe could run -> not reserve-blocked
+            return None
+        for recipe in b.recipes:
+            for res, n in recipe["inp"].items():
+                reserve = config.INPUT_RESERVE.get(res, 0)
+                if reserve and self.inv.get(res, 0) - n < reserve:
+                    return (res, reserve)
         return None
 
     def _consume(self, inp):

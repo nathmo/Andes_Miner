@@ -563,6 +563,8 @@ class UI:
                 st = "obsolete"
             elif not b.enabled:
                 st = "disabled"
+            elif (blk := game.economy.reserve_block(b)) is not None:
+                st = f"paused: low {config.RESOURCE_LABEL.get(blk[0], blk[0])}"
             else:
                 st = "active"
             lines.append((f"{b.name} [{st}]", config.COL_ACCENT))
@@ -594,6 +596,10 @@ class UI:
             st, sc = "Obsolete — superseded by a better building", (220, 150, 90)
         elif not b.enabled:
             st, sc = "Disabled (not processing)", (220, 150, 90)
+        elif (blk := game.economy.reserve_block(b)) is not None:
+            res, reserve = blk
+            st, sc = (f"Paused — low {config.RESOURCE_LABEL.get(res, res)} (reserve {reserve})",
+                      (230, 200, 120))
         else:
             st, sc = "Active", (120, 210, 130)
         surf.blit(self.font_s.render(st, True, sc), (box.x + 10, box.y + 30))

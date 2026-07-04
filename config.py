@@ -295,6 +295,14 @@ OBSOLETED_BY = {
     "oven": ["arc_furnace"],
 }
 
+# Automatic machines keep a reserve floor of these shared/bootstrap resources so
+# they don't drain the stockpile that manual jobs also draw on. A processing
+# recipe only starts if consuming its inputs would still leave at least this much
+# behind — otherwise the machine sits idle ("paused"). Rubble in particular is the
+# bootstrap material for roads and construction, so the Silica Kiln pauses instead
+# of eating the last of it. Set a resource to 0 (or omit it) for no reserve.
+INPUT_RESERVE = {"rubble": 50}
+
 # Resources tracked in the global stockpile (order = HUD display order). The HUD
 # only shows resources you currently hold, so the list can grow without clutter.
 RESOURCES = ["rubble", "iron_ore", "copper_ore", "iron_crushed", "copper_crushed",
