@@ -385,17 +385,13 @@ class UI:
 
     # ------------------------------------------------------------------ trade tab
     def _draw_trade_tab(self, surf, game, mouse, x, w, y, clip):
+        # Fully-populated, STATIC layout: every sell/buy button is always present
+        # (greyed when unavailable) so nothing shifts as you trade. Prices sit to
+        # the right of each button; the blue energy status goes below the buttons.
         econ = game.economy
+        bw = w - 46                    # button width; the +/-price sits to its right
         surf.blit(self.font_b.render("TRADE", True, config.COL_TEXT), (x, y)); y += 22
-        if econ.power_demand > 0 or econ.solar_supply > 0 or econ.battery_capacity > 0:
-            ptxt = f"Power {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f}"
-            surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 15
-            if econ.battery_capacity > 0:
-                btxt = f"Battery {econ.battery_charge:.0f}/{econ.battery_capacity:.0f}"
-                surf.blit(self.font_s.render(btxt, True, (130, 205, 140)), (x, y)); y += 15
-        if econ.brownout:
-            surf.blit(self.font_s.render("MACHINES STOPPED (no power/cash)", True, (240, 130, 110)),
-                      (x, y)); y += 15
+
         rC = pygame.Rect(x, y, w, 26)
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
         self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,
@@ -404,26 +400,45 @@ class UI:
         rM = pygame.Rect(x, y, w, 22)
         self._button(surf, rM, "Prices & Trends...", mouse, on=game.show_market)
         self._add_in(rM, clip, "toggle_market"); y += 28
+
+        # SELL — every sellable resource, greyed when you hold none
+        surf.blit(self.font_s.render("SELL", True, config.COL_TEXT_DIM), (x, y)); y += 15
         for res in config.RESOURCES:
-            if econ.amount(res) <= 0:
+            if res not in config.SELL_PRICES:
                 continue
-            r = pygame.Rect(x, y, w, 22)
-            self._button(surf, r, f"Sell {config.RESOURCE_LABEL[res]}", mouse)
+            r = pygame.Rect(x, y, bw, 22)
+            self._button(surf, r, f"Sell {config.RESOURCE_LABEL[res]}", mouse,
+                         enabled=econ.amount(res) > 0)
             gain = econ.sell_price(res) * config.SELL_BATCH
             surf.blit(self.font_s.render(f"+{gain}j", True, config.COL_TEXT_DIM),
-                      (r.right - 42, r.y + 5))
+                      (r.right + 6, r.y + 5))
             self._add_in(r, clip, "sell", res)
             y += 24
-        # buy materials you can't make yet (silicon, lithium)
+
+        # BUY — every buyable material, greyed when you can't afford it
+        y += 4
+        surf.blit(self.font_s.render("BUY", True, config.COL_TEXT_DIM), (x, y)); y += 15
         for res in config.BUYABLE:
             price = int(econ.buy_price(res) * config.BUY_BATCH)
-            r = pygame.Rect(x, y, w, 22)
+            r = pygame.Rect(x, y, bw, 22)
             self._button(surf, r, f"Buy {config.RESOURCE_LABEL[res]}", mouse,
                          enabled=econ.jammies >= price)
             surf.blit(self.font_s.render(f"-{price}j", True, config.COL_TEXT_DIM),
-                      (r.right - 46, r.y + 5))
+                      (r.right + 6, r.y + 5))
             self._add_in(r, clip, "buy_material", res)
             y += 24
+
+        # energy status — the blue text, now AFTER the buttons so it never shifts them
+        y += 6
+        pygame.draw.line(surf, config.COL_PANEL_EDGE, (x, y), (x + w, y)); y += 6
+        ptxt = f"Power {econ.power_demand:.0f}  solar {econ.solar_supply:.0f}  grid {econ.grid_draw:.0f}"
+        surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 15
+        bcol = (130, 205, 140) if econ.battery_capacity > 0 else config.COL_TEXT_DIM
+        surf.blit(self.font_s.render(f"Battery {econ.battery_charge:.0f}/{econ.battery_capacity:.0f}",
+                                     True, bcol), (x, y)); y += 15
+        if econ.brownout:
+            surf.blit(self.font_s.render("BLACKOUT - no cash for power", True, (240, 130, 110)),
+                      (x, y)); y += 15
         return y
 
     # ------------------------------------------------------------------ bottom bar
