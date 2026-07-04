@@ -1,50 +1,23 @@
-All items below are implemented (one commit each). Kept as a record.
+GENERAL NOTE : FOR EACH TASK MAKE A COMMIT
 
--> [x] create a repo with game screen shot / doc / readme / instruction and a github action that compile a .exe, .deb and MacOS app when pushing change.
--> PAUSE HERE, from now one, each of theses point should be made into a commit so that if anything break we can revert easily.
+-> [x] Cloud and bird are attach to display -> when zooming, the bird and cloud dont scale... and shift left and right. (world-anchored: clouds/birds now scale with zoom and pan with the map)
 
--> [x] add sprite for iced coffee, rename coffee to iced coffee. (use an emoji for now, export it to png)
--> [x] add sprite for jammies ( a blue circular coin)
--> [x] make the wage action based and not time based. (like 10 tile action = 1 iced coffee ) so the game is not time pressured.
--> [x] make the cleaning of rubble drop a rubble entity that need to be picked up.
--> [x] add select animation for cleaning rubble (to know which one are currently scheduled for cleaning like its done for mining).do the same for the roads when they are scheduled for construction.
--> [x] for the excavated texture, make it differentiated based on the original tile (excavated andesite dont look the same as excavated basalte)
--> [x] road shoudl cost rubble that need to be brought to site to be converted to road
--> [x] need to add a medium machine to build the road without a human worker
--> [x] Need to add a starting building that serve as a storage (so they dont just drop entity on the road in 0,0)
--> [x] need to add a new building that allow to plan mining operation automatically ( so that we can drag and select large area to mine and once this building exist, the planning of mining and road building to reach the requested ore can be automated.)
--> [x] need to make vehicle and worker find the shortes path timewise (aka use the road to go faster) if not done aldready. If it was done aldready, it mean we need to slow down more the rubble and make the road faster they the excavated rock.
--> [x] vehicle of first tier can mine rock whithin 2 tile, medium one can go 3 tile, the mega machine can do 4 tile away
--> [x] cargo vehicle have a capacity that depend of tier. small one can do only carry one item. medium can carry 3, large can carry 9 item. (and thus for the mega machine, we can keep mining/cleaning rubble and only drop the ore/rubble once fully full)
--> [x] need to make machine of higher tier much more expensive and every machine should much slower to give an incentive to build more than one (having a processing time that make sense so that its fun and not impossible to saturate).
+-> [x] the cloud are not thick enouugh (height wise) and way too common / dense. same for the bird lower the density. (taller cloud sprite; cloud + bird density lowered)
 
+-> [x] make the bird trajectory not just lattera but more random (still in straigh line but also some diagonal. not horizontal only) (each condor flies a varied diagonal straight line)
 
--> [x] need to implement cable car, they go in straight line back to the center house, use to increase troughput of ore transporter as they can get quite slow once we are far away from center coord. come as a building pair. can only be built on road.
+-> [x] when pausing the bird and cloud should also pause. (sky is driven by sim time, so pause freezes it and speed scales it)
 
--> [x] there should be an overarching goal that give a sense of direction (villages to connect by road — lightweight goal, infinite map kept).
+-> [x] add a clock and calendar (start the calendar at today date. each each game hourse should last about 30 second in x1 time) (top-bar clock + calendar, 30s = 1 game hour, day/night synced)
 
--> [x] when pointing a tile, it should also give info on the item dropped on it ( is it rubble ? iron ore ? copper ore ? ...) and excavated tile will not drop anything thus should not display that they contain ore.
+-> [x] add to the market an option to buy rubbles. (Buy Rubble in the Trade tab)
 
--> [x] some other meterial to mine — SiO2 from rubble, lithium salt patches (spodumene) -> lithium; solar panels for energy generation reducing bought kWh.
+-> [x] show the price of electricity in the trend (and in the config define how many KWH / operation are required for each machine) (electricity price drifts + charted in the market panel; config.MACHINE_KWH_PER_OP)
 
--> [x] a market where we can buy and sell material we dont have (silicon/lithium bought; higher-tier vehicles require them; start with cash capital).
+-> [x] if a road job is missing rubble, say rubble shortage. (same style as strike) (amber RUBBLE SHORTAGE in the top bar + log)
 
--> [x] a "stock market" with varying price (random fluctuation + production-driven trend; price floor; panel with prices and trends over time).
+-> [x] make sure that if there is no more cash to buy electricity, there is an error message like electric black out, buy some energy. (same style as strike) (red BLACKOUT in the top bar + log)
 
--> [x] day / night cycle (change the luminosity). Solar panel yield depend of sun output.
-
--> [x] clouds that slowly move + birds (condors, 3 flight frames, placeholder sprites); altitude-dependent distribution; semi-transparent noise clouds.
-
--> [x] Battery grid storage (Battery Factory + lithium electrolysis + battery cells).
-
--> [x] grid carbon intensity bar; emissions graph (rate + cumulative); auto-buy kWh; run out of cash -> machines stop, workers keep going.
-
--> [x] Warehouse: store minerals + auto-sell under cash/coffee thresholds; upgrade to sell whatever is most profitable.
-
--> [x] load menu to pick a save; rolling automatic backups (every 2 min; keep 2/4/8/16/32/64/128/256-min snapshots).
-
--> [x] Splashscreen: far zoom on the summit with slow clouds; title (Andes Mining Corp) + press space to start; SPACE zooms in to 0,0 and the game starts at x1.
-
--> [x] side panel buttons ran off-screen: split it into Build / Fleet / Trade tabs (money+coffee always in the top bar; wheel scrolls a tab if it overflows).
-
--> [x] split the combined Mine/Clean tool into three distinct action buttons — Excavate (rock), Clean (rubble), Road — in the bottom bar (shortcuts M/E, C, R).
+Also done this pass:
+-> [x] the bottom action bar looked "gone": the 800px-tall window overflowed short (1366x768) screens, hiding it behind the taskbar. The window now fits the desktop on startup.
+-> [x] Settings menu: Save game + Save & Quit buttons.
