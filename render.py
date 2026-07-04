@@ -197,7 +197,8 @@ class Renderer:
         now = pygame.time.get_ticks()
         dt = 0.0 if self._last_ticks is None else (now - self._last_ticks) / 1000.0
         self._last_ticks = now
-        self.env.update(dt, cam)
+        # Drive the sky by SIM time: frozen when paused, and scaled by game speed.
+        self.env.update(dt * game.sim_multiplier(), cam)
         self.env.draw(surface, cam, show_clouds=game.show_clouds, show_birds=game.show_birds)
 
     def _night_overlay(self, size, alpha):
