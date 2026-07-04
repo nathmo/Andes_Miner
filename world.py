@@ -139,7 +139,7 @@ class World:
         tile.state = RUBBLE
         tile.marked = False
         if tile.ore_type:
-            key = tile.ore_type + "_ore"
+            key = tile.ore_type      # full resource key (iron_ore / copper_ore / lithium_salt)
             tile.drops[key] = tile.drops.get(key, 0) + tile.ore_amount
         self._mark_modified(tile)
 

@@ -14,8 +14,12 @@ class Economy:
         self.inv = {res: 0 for res in config.RESOURCES}
         for k, v in config.START_INVENTORY.items():
             self.inv[k] = self.inv.get(k, 0) + v
-        self.jammies = config.JAMMIES_START     # money
-        self.coffee = config.COFFEE_START       # iced coffee (worker salary)
+        self.jammies = float(config.JAMMIES_START)   # money (float: energy micro-costs)
+        self.coffee = config.COFFEE_START            # iced coffee (worker salary)
+        # energy telemetry (updated each tick in update())
+        self.energy_bought = 0.0        # cumulative grid power drawn
+        self.power_demand = 0.0         # power used this tick
+        self.solar_supply = 0.0         # solar power available this tick
 
     # ------------------------------------------------------------------ stockpile
     def amount(self, res):
@@ -57,15 +61,18 @@ class Economy:
         return True
 
     # ------------------------------------------------------------------ processing
-    def update(self, dt, buildings):
+    def update(self, dt, buildings, sun=1.0):
         # Mark obsolete buildings (poor-yield ones superseded by a better type).
         enabled_types = {b.btype for b in buildings if b.built and b.enabled}
         for b in buildings:
             b.obsolete = any(t in enabled_types
                              for t in config.OBSOLETED_BY.get(b.btype, []))
 
+        self._allocate_power(dt, buildings, sun)
+
+        # Only powered buildings advance their recipe (no power -> paused).
         for b in buildings:
-            if not b.active or not b.recipes:
+            if not b.active or not b.recipes or not b.powered:
                 continue
             if b.current is None:
                 b.current = self._pick_recipe(b)
@@ -81,6 +88,35 @@ class Economy:
                     self.add(res, n)
                 b.current = None
                 b.timer = 0.0
+
+    def _allocate_power(self, dt, buildings, sun):
+        """Solar first, then buy the grid shortfall with jammies. Buildings that
+        can't be powered this tick brown out (b.powered=False)."""
+        solar = sun * sum(config.SOLAR_ARRAY_OUTPUT for b in buildings
+                          if b.built and b.enabled and b.power_gen)
+        buyable = (self.jammies / (dt * config.KWH_PRICE)
+                   if dt > 0 and config.KWH_PRICE > 0 else 0.0)
+        budget = solar + max(0.0, buyable)
+        used = 0.0
+        for b in buildings:
+            if not b.active or not b.recipes:
+                b.powered = False
+                continue
+            will_run = b.current is not None or self._pick_recipe(b) is not None
+            if not will_run:
+                b.powered = False
+                continue
+            p = b.power_draw
+            if used + p <= budget + 1e-9:
+                used += p
+                b.powered = True
+            else:
+                b.powered = False          # brownout
+        grid = max(0.0, used - solar)
+        self.jammies -= grid * dt * config.KWH_PRICE
+        self.energy_bought += grid * dt
+        self.power_demand = used
+        self.solar_supply = solar
 
     def _pick_recipe(self, b):
         """First recipe (in config order) whose inputs are all in stock."""

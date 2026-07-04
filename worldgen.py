@@ -59,7 +59,10 @@ def rock_at(q, r, seed):
     # Ore-vein field (separate seed offset, lower frequency = big rare blobs).
     vein = fbm(q * config.NOISE_VEIN_FREQ, r * config.NOISE_VEIN_FREQ, seed + 91)
     if vein > config.VEIN_T:
-        # Inside a vein: iron vs copper chosen by a third field's split.
+        # Inside a vein: a rare high patch is lithium ore, else iron vs copper.
+        li = fbm(q * config.NOISE_VEIN_FREQ * 1.7, r * config.NOISE_VEIN_FREQ * 1.7, seed + 991)
+        if li > config.LITHIUM_T:
+            return "spodumene"
         pick = fbm(q * config.NOISE_VEIN_FREQ, r * config.NOISE_VEIN_FREQ, seed + 613)
         return "basalt" if pick >= 0.5 else "rhyolite"
 

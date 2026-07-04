@@ -90,6 +90,8 @@ class UI:
 
         x = 12
         for res in config.RESOURCES:
+            if game.economy.amount(res) <= 0:      # only show what you hold
+                continue
             col = config.RESOURCE_COLOR[res]
             pygame.draw.circle(surf, col, (x + 6, TOP_H // 2), 6)
             txt = f"{config.RESOURCE_LABEL[res]}:{game.economy.amount(res)}"
@@ -137,9 +139,12 @@ class UI:
         surf.blit(self.font_b.render("MARKET", True, config.COL_TEXT), (x, y)); y += 20
         mcol = (240, 120, 110) if game.wages_due else config.COL_ACCENT
         jw = self._icon(surf, "jammies", x, y - 2, 18)
-        surf.blit(self.font.render(f"{econ.jammies}", True, config.COL_ACCENT), (x + jw + 3, y))
+        surf.blit(self.font.render(f"{int(econ.jammies)}", True, config.COL_ACCENT), (x + jw + 3, y))
         cw = self._icon(surf, "iced_coffee", x + 112, y - 2, 18)
         surf.blit(self.font.render(f"{econ.coffee}", True, mcol), (x + 112 + cw + 2, y)); y += 20
+        if econ.power_demand > 0 or econ.solar_supply > 0:
+            ptxt = f"Power {econ.power_demand:.0f}  (solar {econ.solar_supply:.0f})"
+            surf.blit(self.font_s.render(ptxt, True, (150, 200, 230)), (x, y)); y += 16
         rC = pygame.Rect(x, y, w, 26)
         ccost = config.COFFEE_BATCH * config.COFFEE_PRICE
         self._button(surf, rC, f"Buy {config.COFFEE_BATCH} Iced Coffee", mouse,
@@ -232,8 +237,9 @@ class UI:
         if t.state == ROCK:
             lines.append((f"Hardness: {t.hardness_label}  ({t.mine_time:.1f}s)", config.COL_TEXT_DIM))
             if t.ore_type:
-                oc = config.COL_ORE_IRON if t.ore_type == "iron" else config.COL_ORE_COPPER
-                lines.append((f"Drops {t.ore_amount} {t.ore_type} ore when mined", oc))
+                oc = config.RESOURCE_COLOR.get(t.ore_type, config.COL_TEXT)
+                label = config.RESOURCE_LABEL.get(t.ore_type, t.ore_type)
+                lines.append((f"Drops {t.ore_amount} {label} when mined", oc))
             reach = game.max_mine_reach()
             in_range = game.world.mineable(t, reach)
             lines.append(("In mining range" if in_range else f"Needs road within {reach} tiles",

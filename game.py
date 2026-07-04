@@ -45,6 +45,9 @@ class Game:
         self.speed_index = 0
         self.paused = False
 
+        # environment: sun factor drives solar output (item 24 makes it cycle)
+        self.sun = 1.0
+
         # upkeep (salary paid in iced coffee, per completed job — register_action)
         self.wages_due = False        # True while any worker is paused unpaid
         self.selected_building = None
@@ -127,7 +130,7 @@ class Game:
                 self.log("Out of iced coffee — a worker paused. Buy more to keep going.")
             elif was_striking and not self.wages_due:
                 self.log("Wages paid — crew back to work")
-            self.economy.update(sim_dt, self.buildings)
+            self.economy.update(sim_dt, self.buildings, self.sun)
             self._update_goal()
         self._update_messages(real_dt)
         self._autosave_t += real_dt

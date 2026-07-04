@@ -65,12 +65,14 @@ SHADE_RIGHT = 0.50                # right face (darkest — in shadow)
 
 # ------------------------------------------------------------------ rock types
 # key: (display name, base RGB, mine_time seconds at hand-speed, ore or None, ore_amount)
+# key: (display name, base RGB, mine_time s, drop resource-key or None, drop amount)
 ROCK_TYPES = {
-    "andesite":  ("Andesite",  (150, 150, 158), 1.6, None,     0),  # easy
-    "diorite":   ("Diorite",   (198, 200, 206), 3.0, None,     0),  # medium
-    "granite":   ("Granite",   (196, 158, 150), 5.0, None,     0),  # hard
-    "basalt":    ("Basalt",    ( 74,  76,  92), 3.0, "iron",   2),  # medium, iron-rich
-    "rhyolite":  ("Rhyolite",  (206, 172, 132), 1.8, "copper", 2),  # easy, copper-rich
+    "andesite":  ("Andesite",  (150, 150, 158), 1.6, None,           0),  # easy
+    "diorite":   ("Diorite",   (198, 200, 206), 3.0, None,           0),  # medium
+    "granite":   ("Granite",   (196, 158, 150), 5.0, None,           0),  # hard
+    "basalt":    ("Basalt",    ( 74,  76,  92), 3.0, "iron_ore",     2),  # medium, iron-rich
+    "rhyolite":  ("Rhyolite",  (206, 172, 132), 1.8, "copper_ore",   2),  # easy, copper-rich
+    "spodumene": ("Spodumene", (176, 202, 176), 3.6, "lithium_salt", 1),  # rare, lithium ore
 }
 
 # ------------------------------------------------------------------ world gen
@@ -90,6 +92,7 @@ DIORITE_T = 0.62
 # Ore veins: a separate low-freq noise; above the threshold a cell becomes an
 # ore-rich rock, iron vs copper chosen by a third noise's sign.
 VEIN_T = 0.66
+LITHIUM_T = 0.72                  # inside a vein, above this a patch becomes spodumene (rare)
 NOISE_BASE_FREQ = 0.09            # higher = smaller rock-type blobs
 NOISE_VEIN_FREQ = 0.05            # lower = bigger, rarer veins
 NOISE_OCTAVES = 3
@@ -179,9 +182,31 @@ BUILDINGS = {
     "cable_station": dict(name="Cable Car Station", cost={"iron": 4, "copper": 2}, color=(120, 150, 172),
                         process=None, on="road",
                         note="On a road, far out: haulers unload here and it cables ore to HQ"),
+    "silica_kiln": dict(name="Silica Kiln", cost={"iron": 4, "copper": 2}, color=(150, 160, 172),
+                        process=[dict(inp={"rubble": 2}, out={"sio2": 1}, time=3.0)],
+                        note="Bakes waste rubble into silica (SiO2)"),
+    "solar_foundry": dict(name="Solar Foundry", cost={"iron": 6, "copper": 4}, color=(80, 120, 180),
+                        process=[dict(inp={"sio2": 2, "copper": 1}, out={"solar_panel": 1}, time=6.0)],
+                        note="SiO2 + copper -> solar panels"),
+    "solar_array": dict(name="Solar Array", cost={"solar_panel": 2, "iron": 2}, color=(60, 100, 170),
+                        process=None, power_gen=True,
+                        note="Generates power from sunlight, cutting your grid bill"),
+    "electrolysis": dict(name="Electrolysis Plant", cost={"iron": 8, "copper": 5}, color=(150, 190, 175),
+                        process=[dict(inp={"lithium_salt": 1}, out={"lithium": 1}, time=5.0)],
+                        note="Lithium salt -> lithium metal"),
 }
 
 COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
+
+# ------------------------------------------------------------------ energy / grid
+# Processing machines draw power while running. Solar Arrays generate it; any
+# shortfall is auto-bought from the grid with jammies. No cash -> machines stop.
+KWH_PRICE = 0.04                 # jammies per unit of grid power per second
+SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
+BUILDING_POWER = {               # power drawn while a building is processing
+    "oven": 4, "crusher": 6, "arc_furnace": 12,
+    "silica_kiln": 8, "solar_foundry": 10, "electrolysis": 14,
+}
 
 # ------------------------------------------------------------------ auto-planner
 # With a built Mining Planner, box-selecting rock also plans dig+road corridors
@@ -196,19 +221,28 @@ OBSOLETED_BY = {
     "oven": ["arc_furnace"],
 }
 
-# Resources tracked in the global stockpile (order = HUD display order).
-RESOURCES = ["rubble", "iron_ore", "copper_ore", "iron_crushed", "copper_crushed", "iron", "copper"]
+# Resources tracked in the global stockpile (order = HUD display order). The HUD
+# only shows resources you currently hold, so the list can grow without clutter.
+RESOURCES = ["rubble", "iron_ore", "copper_ore", "iron_crushed", "copper_crushed",
+             "iron", "copper", "sio2", "silicon", "lithium_salt", "lithium",
+             "solar_panel", "battery_cell"]
 RESOURCE_LABEL = {
     "rubble": "Rubble",
     "iron_ore": "Fe ore", "copper_ore": "Cu ore",
     "iron_crushed": "Fe crushed", "copper_crushed": "Cu crushed",
     "iron": "Iron", "copper": "Copper",
+    "sio2": "Silica", "silicon": "Silicon",
+    "lithium_salt": "Li salt", "lithium": "Lithium",
+    "solar_panel": "Solar", "battery_cell": "Battery",
 }
 RESOURCE_COLOR = {
     "rubble": (150, 140, 128),
     "iron_ore": COL_ORE_IRON, "copper_ore": COL_ORE_COPPER,
     "iron_crushed": (230, 150, 110), "copper_crushed": (150, 210, 175),
     "iron": (215, 215, 220), "copper": (225, 150, 95),
+    "sio2": (200, 205, 215), "silicon": (128, 132, 148),
+    "lithium_salt": (170, 205, 170), "lithium": (150, 215, 195),
+    "solar_panel": (70, 120, 195), "battery_cell": (120, 205, 120),
 }
 
 # Starting stockpile so the player can bootstrap the first vehicles/buildings.
@@ -225,6 +259,8 @@ SELL_BATCH = 5                    # units sold per click
 SELL_PRICES = {                  # jammies earned per unit sold
     "rubble": 1, "iron_ore": 2, "copper_ore": 2,
     "iron_crushed": 3, "copper_crushed": 3, "iron": 6, "copper": 7,
+    "sio2": 2, "silicon": 8, "lithium_salt": 3, "lithium": 10,
+    "solar_panel": 12, "battery_cell": 20,
 }
 COFFEE_START = 20                 # iced coffees in stock at the start
 COFFEE_PRICE = 1                 # jammies per iced coffee

@@ -11,7 +11,7 @@ import config
 
 class Building:
     __slots__ = ("btype", "q", "r", "built", "progress", "timer", "current",
-                 "enabled", "obsolete")
+                 "enabled", "obsolete", "powered")
 
     def __init__(self, btype, q, r, built=False):
         self.btype = btype
@@ -23,6 +23,7 @@ class Building:
         self.current = None         # index of recipe being processed, or None
         self.enabled = True         # player toggle (building panel)
         self.obsolete = False       # auto-set when a better building exists
+        self.powered = True         # had enough power to run this tick (energy sim)
 
     @property
     def active(self):
@@ -40,3 +41,11 @@ class Building:
     @property
     def recipes(self):
         return self.info["process"]
+
+    @property
+    def power_gen(self):
+        return self.info.get("power_gen", False)
+
+    @property
+    def power_draw(self):
+        return config.BUILDING_POWER.get(self.btype, 0)
