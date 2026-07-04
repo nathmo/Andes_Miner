@@ -2,7 +2,9 @@
 tiles.py — rock types, tile state, and the Tile object.
 
 Tile lifecycle:  ROCK --mine--> RUBBLE --clean--> EXCAVATED --build--> ROAD
-Iron/copper-rich rock drops ore on the tile when mined; ore is then hauled away.
+Mining ore-rich rock and cleaning rubble both leave a physical *drop* on the
+tile (ore / rubble) that a hauler must carry to storage. `tile.drops` is a dict
+of resource-key -> amount (e.g. {"rubble": 1} or {"copper_ore": 2}).
 """
 
 import config
@@ -17,7 +19,7 @@ STATE_NAME = {ROCK: "Rock", RUBBLE: "Rubble", EXCAVATED: "Excavated", ROAD: "Roa
 
 
 class Tile:
-    __slots__ = ("q", "r", "rock", "state", "marked", "ore", "building", "job")
+    __slots__ = ("q", "r", "rock", "state", "marked", "drops", "building", "job")
 
     def __init__(self, q, r, rock, state=ROCK):
         self.q = q
@@ -25,7 +27,7 @@ class Tile:
         self.rock = rock            # rock-type key (see config.ROCK_TYPES)
         self.state = state
         self.marked = False         # queued by the overseer for mining
-        self.ore = None             # None or {"type": "iron"/"copper", "amount": n}
+        self.drops = {}             # resource-key -> amount of piles sitting here
         self.building = None        # Building instance sitting on this tile (or None)
         self.job = None             # active job reserving this tile (or None)
 

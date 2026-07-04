@@ -221,9 +221,9 @@ class UI:
             in_range = game.world.mineable(t)
             lines.append(("In mining range" if in_range else "Needs road within 2 tiles",
                           (120, 210, 130) if in_range else (220, 150, 90)))
-        if t.ore:
-            oc = config.COL_ORE_IRON if t.ore["type"] == "iron" else config.COL_ORE_COPPER
-            lines.append((f"Ore drop: {t.ore['amount']} {t.ore['type']}", oc))
+        for res, amt in t.drops.items():
+            oc = config.RESOURCE_COLOR.get(res, config.COL_TEXT)
+            lines.append((f"On ground: {amt} {config.RESOURCE_LABEL.get(res, res)}", oc))
         if t.building:
             b = t.building
             if not b.built:

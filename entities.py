@@ -42,7 +42,7 @@ class Agent:
         self.job = None
         self.path = []
         self.phase = None               # for HAUL: "pickup" / "deliver"
-        self.carrying = None            # ore dict being hauled
+        self.carrying = None            # dict of resource-key -> amount being hauled
         self.work_timer = 0.0
         self.work_needed = 0.0
         self._target_px = None
@@ -149,11 +149,11 @@ class Agent:
 
         if job.jtype == HAUL:
             if self.phase == "pickup":
-                ore = world.take_ore(world.get_tile(job.q, job.r))
-                if not ore:
+                drop = world.take_drop(world.get_tile(job.q, job.r))
+                if not drop:
                     self._finish(game, done=True)
                     return
-                self.carrying = ore
+                self.carrying = drop
                 # head to HQ to drop off
                 path = pathfinding.find_path(world, self.hex, world.hq)
                 if path is None:
@@ -163,8 +163,10 @@ class Agent:
                 return
             else:  # deliver
                 if self.carrying:
-                    game.economy.add(self.carrying["type"] + "_ore", self.carrying["amount"])
-                    game.log(f"+{self.carrying['amount']} {self.carrying['type']} ore")
+                    for res, amt in self.carrying.items():
+                        game.economy.add(res, amt)
+                    game.log(", ".join(f"+{a} {config.RESOURCE_LABEL.get(res, res)}"
+                                       for res, a in self.carrying.items()))
                     self.carrying = None
                     game.register_action(self)
                 self._finish(game, done=True)
@@ -199,13 +201,13 @@ class Agent:
         t = world.get_tile(job.q, job.r)
         if job.jtype == MINE:
             world.mine(t)
-            if t.ore:
-                game.jobs.add(HAUL, t.q, t.r)         # transporters auto-haul
+            if t.drops:
+                game.jobs.add(HAUL, t.q, t.r)         # transporters auto-haul the ore
             game.jobs.add(CLEAN, t.q, t.r)            # bulldozers auto-clean
         elif job.jtype == CLEAN:
-            world.clean(t)
-            game.economy.add("rubble", config.CLEAN_RUBBLE_YIELD)
-            game.log(f"+{config.CLEAN_RUBBLE_YIELD} rubble")
+            world.clean(t)                            # -> excavated + a rubble pile
+            if t.drops:
+                game.jobs.add(HAUL, t.q, t.r)         # the rubble pile must be hauled
         elif job.jtype == BUILD_ROAD:
             world.build_road(t)
         elif job.jtype == CONSTRUCT:

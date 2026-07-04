@@ -116,7 +116,7 @@ class JobManager:
         if job.jtype == BUILD_ROAD:
             return t.state == 2  # EXCAVATED
         if job.jtype == HAUL:
-            return t.ore is not None
+            return bool(t.drops)
         if job.jtype == CONSTRUCT:
             return t.building is not None and not t.building.built
         return False

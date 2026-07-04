@@ -111,16 +111,18 @@ class World:
 
     # ------------------------------------------------------------------ transitions
     def mine(self, tile):
-        """Rock -> Rubble; drop ore if the rock was ore-rich."""
+        """Rock -> Rubble; drop ore on the tile if the rock was ore-rich."""
         tile.state = RUBBLE
         tile.marked = False
         if tile.ore_type:
-            tile.ore = {"type": tile.ore_type, "amount": tile.ore_amount}
+            key = tile.ore_type + "_ore"
+            tile.drops[key] = tile.drops.get(key, 0) + tile.ore_amount
         self._mark_modified(tile)
 
     def clean(self, tile):
-        """Rubble -> Excavated."""
+        """Rubble -> Excavated, leaving a rubble pile on the tile to be hauled."""
         tile.state = EXCAVATED
+        tile.drops["rubble"] = tile.drops.get("rubble", 0) + config.CLEAN_RUBBLE_YIELD
         self._mark_modified(tile)
 
     def build_road(self, tile):
@@ -129,10 +131,10 @@ class World:
         self.road_tiles.add((tile.q, tile.r))
         self._mark_modified(tile)
 
-    def take_ore(self, tile):
-        """Remove and return the ore drop sitting on a tile (or None)."""
-        ore = tile.ore
-        tile.ore = None
-        if ore:
+    def take_drop(self, tile):
+        """Remove and return every pile sitting on a tile as a dict (or {})."""
+        drops = tile.drops
+        if drops:
+            tile.drops = {}
             self._mark_modified(tile)
-        return ore
+        return drops

@@ -71,9 +71,9 @@ class Renderer:
                 cx, cy = cam.world_to_screen(wx, wy)
                 self._draw_tile(surface, tile, cx, cy, size, show_mine_hint, game)
 
-        # Ore drops, buildings, agents on top.
+        # Drops (ore / rubble piles), buildings, agents on top.
         self._draw_buildings(surface, game, cam, size)
-        self._draw_ore(surface, game, cam, size, q_lo, q_hi, r_lo, r_hi)
+        self._draw_drops(surface, game, cam, size, q_lo, q_hi, r_lo, r_hi)
         self._draw_agents(surface, game, cam, size)
 
         # Placement / selection previews.
@@ -129,19 +129,24 @@ class Renderer:
             pygame.draw.line(surface, config.COL_MARK, (cx - r, cy - r), (cx + r, cy + r), 2)
             pygame.draw.line(surface, config.COL_MARK, (cx + r, cy - r), (cx - r, cy + r), 2)
 
-    # ------------------------------------------------------------------ ore
-    def _draw_ore(self, surface, game, cam, size, q_lo, q_hi, r_lo, r_hi):
+    # ------------------------------------------------------------------ drops
+    def _draw_drops(self, surface, game, cam, size, q_lo, q_hi, r_lo, r_hi):
         for r in range(r_lo, r_hi + 1):
             for q in range(q_lo, q_hi + 1):
                 tile = game.world.get_tile(q, r)
-                if not tile.ore:
+                if not tile.drops:
                     continue
                 wx, wy = hexgrid.hex_to_pixel(q, r, config.HEX_SIZE)
                 cx, cy = cam.world_to_screen(wx, wy)
-                col = config.COL_ORE_IRON if tile.ore["type"] == "iron" else config.COL_ORE_COPPER
+                # up to 3 markers total, one colour per resource on the pile
+                cols = []
+                for res, amt in tile.drops.items():
+                    cols += [config.RESOURCE_COLOR.get(res, (200, 200, 200))] * amt
+                cols = cols[:3]
                 rad = max(3, int(size * 0.20))
-                for i in range(min(3, tile.ore["amount"])):
-                    ox = cx + (i - 1) * rad * 0.9
+                n = len(cols)
+                for i, col in enumerate(cols):
+                    ox = cx + (i - (n - 1) / 2.0) * rad * 0.95
                     pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
                     pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
 
@@ -194,9 +199,10 @@ class Renderer:
                 rect.center = (cx, cy)
                 pygame.draw.rect(surface, col, rect, border_radius=3)
                 pygame.draw.rect(surface, _shade(col, 0.5), rect, 2, border_radius=3)
-            # carrying indicator
+            # carrying indicator (coloured by the first resource on board)
             if getattr(a, "carrying", None):
-                oc = config.COL_ORE_IRON if a.carrying["type"] == "iron" else config.COL_ORE_COPPER
+                res = next(iter(a.carrying))
+                oc = config.RESOURCE_COLOR.get(res, (200, 200, 200))
                 pygame.draw.circle(surface, oc, (int(cx), int(cy - rad - 3)), max(2, int(rad * 0.4)))
             # working flash
             if a.state == "WORKING" and (int(a.work_timer * 6) % 2 == 0):

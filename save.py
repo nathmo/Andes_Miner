@@ -25,7 +25,7 @@ def save_game(game, path=config.SAVE_FILE):
     for (q, r) in game.world.modified:
         t = game.world.get_tile(q, r)
         tiles.append({"q": q, "r": r, "rock": t.rock, "state": t.state,
-                      "marked": t.marked, "ore": t.ore})
+                      "marked": t.marked, "drops": t.drops})
     data = {
         "seed": game.world.seed,
         "hq": list(game.world.hq),
@@ -66,7 +66,11 @@ def load_game(path=config.SAVE_FILE, camera=None):
         t.rock = td["rock"]
         t.state = td["state"]
         t.marked = td.get("marked", False)
-        t.ore = td.get("ore")
+        drops = td.get("drops")
+        if drops is None:                         # migrate a pre-drops save
+            old = td.get("ore")
+            drops = {old["type"] + "_ore": old["amount"]} if old else {}
+        t.drops = dict(drops)
         game.world.modified.add((td["q"], td["r"]))
     # rebuild road cache
     game.world.road_tiles = {(q, r) for (q, r) in game.world.modified
