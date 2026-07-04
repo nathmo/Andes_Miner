@@ -23,13 +23,23 @@ import save as savemod
 async def main():
     pygame.init()
     pygame.display.set_caption(config.TITLE)
-    screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT), pygame.RESIZABLE)
+
+    # Fit the initial window to the desktop so the bottom action bar is never
+    # pushed off-screen (e.g. an 800px-tall window on a 768px laptop screen).
+    win_w, win_h = config.WINDOW_WIDTH, config.WINDOW_HEIGHT
+    try:
+        dw, dh = pygame.display.get_desktop_sizes()[0]
+        win_w = min(win_w, dw)
+        win_h = max(480, min(win_h, dh - 100))   # leave room for title bar + taskbar
+    except Exception:
+        pass
+    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
     clock = pygame.time.Clock()
 
-    camera = Camera(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
+    camera = Camera(win_w, win_h)
     game = Game(seed=config.WORLD_SEED, camera=camera)
     renderer = Renderer()
-    ui = UI(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
+    ui = UI(win_w, win_h)
     inp = InputHandler()
     splash = Splash(camera)
 
