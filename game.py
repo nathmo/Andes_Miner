@@ -145,8 +145,8 @@ class Game:
     def can_place_here(self, q, r):
         t = self.world.get_tile(q, r)
         if self.tool == "road":
-            return (t.state == EXCAVATED and not self.jobs.has_job(q, r, BUILD_ROAD)
-                    and self.economy.can_afford(config.ROAD_COST))
+            # Roads can be planned freely; a builder fetches the rubble to the site.
+            return t.state == EXCAVATED and not self.jobs.has_job(q, r, BUILD_ROAD)
         if self.tool == "build":
             if t.building is not None:
                 return False
@@ -159,8 +159,7 @@ class Game:
         if not self.can_place_here(q, r):
             return
         if self.tool == "road":
-            if self.economy.spend(config.ROAD_COST):
-                self.jobs.add(BUILD_ROAD, q, r)
+            self.jobs.add(BUILD_ROAD, q, r)   # rubble is fetched to the site by the builder
         elif self.tool == "build":
             cost = config.BUILDINGS[self.build_choice]["cost"]
             if self.economy.spend(cost):

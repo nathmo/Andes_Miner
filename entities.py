@@ -99,13 +99,29 @@ class Agent:
         world = game.world
         target = job.pos
 
+        if job.jtype == BUILD_ROAD:
+            # A road costs rubble that must be carried from storage to the site.
+            if not game.economy.can_afford(config.ROAD_COST):
+                game.jobs.release(job, cooldown=2.0)     # no rubble to supply yet
+                return
+            path = pathfinding.find_path(world, self.hex, world.hq)
+            if path is None:
+                path, _ = pathfinding.find_path_adjacent(world, self.hex, world.hq)
+                if path is None:
+                    game.jobs.release(job, cooldown=1.5)
+                    return
+            self.job = job
+            self.phase = "fetch"                         # go to storage, grab rubble
+            self._begin_path(path)
+            return
+
         if job.jtype in (MINE, CONSTRUCT):
             path, stand = pathfinding.find_path_adjacent(world, self.hex, target)
             if stand is None:
                 game.jobs.release(job, cooldown=1.5)
                 return
         else:
-            # CLEAN / BUILD_ROAD / HAUL: the tile itself is passable.
+            # CLEAN / HAUL: the tile itself is passable.
             path = pathfinding.find_path(world, self.hex, target)
             if path is None:
                 path, stand = pathfinding.find_path_adjacent(world, self.hex, target)
@@ -172,7 +188,25 @@ class Agent:
                 self._finish(game, done=True)
                 return
 
-        # MINE / CLEAN / BUILD_ROAD / CONSTRUCT -> spend work time
+        if job.jtype == BUILD_ROAD and self.phase == "fetch":
+            # At storage: take the rubble the road needs, then carry it to the site.
+            if not game.economy.spend(config.ROAD_COST):
+                game.jobs.release(job, cooldown=2.0)     # rubble ran out — retry later
+                self.job = None
+                self.phase = None
+                self.path = []
+                self._target_px = None
+                self.state = "IDLE"
+                return
+            self.carrying = dict(config.ROAD_COST)
+            self.phase = "build"
+            path = pathfinding.find_path(world, self.hex, job.pos)
+            if path is None:
+                path, _ = pathfinding.find_path_adjacent(world, self.hex, job.pos)
+            self._begin_path(path or [])
+            return
+
+        # MINE / CLEAN / BUILD_ROAD (build phase) / CONSTRUCT -> spend work time
         self.work_timer = 0.0
         self.work_needed = self._work_time(game, job)
         self.state = "WORKING"
@@ -209,7 +243,8 @@ class Agent:
             if t.drops:
                 game.jobs.add(HAUL, t.q, t.r)         # the rubble pile must be hauled
         elif job.jtype == BUILD_ROAD:
-            world.build_road(t)
+            world.build_road(t)                          # consumes the carried rubble
+            self.carrying = None
         elif job.jtype == CONSTRUCT:
             if t.building:
                 t.building.built = True
