@@ -37,6 +37,10 @@ MIN_ZOOM = 0.35
 MAX_ZOOM = 2.4
 ZOOM_STEP = 1.12                  # multiplier per wheel notch
 
+# Splash intro: open far out on the summit, then zoom down to HQ on SPACE.
+SPLASH_SUMMIT_R = 24              # how far up the slope the opening view sits
+SPLASH_ZOOM_DUR = 1.8            # seconds for the zoom-in animation
+
 # ------------------------------------------------------------------ camera
 CAM_PAN_SPEED = 500               # px/sec for WASD / arrow panning (screen space)
 CAM_EDGE_PAN = False              # edge-of-screen panning (off by default)

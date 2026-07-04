@@ -16,6 +16,7 @@ from game import Game
 from render import Renderer
 from ui import UI
 from input import InputHandler
+from splash import Splash
 import save as savemod
 
 
@@ -30,8 +31,7 @@ async def main():
     renderer = Renderer()
     ui = UI(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
     inp = InputHandler()
-
-    game.log("Mark rock near the road to start mining (Mine tool).")
+    splash = Splash(camera)
 
     running = True
     while running:
@@ -40,10 +40,25 @@ async def main():
 
         events = pygame.event.get()
         for e in events:
-            if e.type == pygame.VIDEORESIZE:
+            if e.type == pygame.QUIT:
+                running = False
+            elif e.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode((e.w, e.h), pygame.RESIZABLE)
                 camera.resize(e.w, e.h)
                 ui.resize(e.w, e.h)
+
+        # Splash intro: far summit view + title, then zoom in to HQ on SPACE.
+        if splash.active():
+            splash.handle(events)
+            splash.update(dt)
+            renderer.draw(screen, game)
+            splash.draw_overlay(screen)
+            pygame.display.flip()
+            if not splash.active():
+                game.log("Mark rock near the road to start mining (Mine tool).")
+            await asyncio.sleep(0)
+            continue
+
         if inp.handle(events, game, ui, camera) == "quit":
             running = False
 
