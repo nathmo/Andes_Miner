@@ -69,6 +69,9 @@ class JobManager:
     def has_job(self, q, r, jtype):
         return (q, r, jtype) in self._by_tile
 
+    def count(self, jtype):
+        return sum(1 for j in self.jobs if j.jtype == jtype)
+
     # ------------------------------------------------------------------ tick
     def update(self, dt):
         for job in self.jobs:

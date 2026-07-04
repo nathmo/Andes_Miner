@@ -245,6 +245,9 @@ class UI:
         if game.wages_due:
             surf.blit(self.font_b.render("ON STRIKE", True, (240, 110, 100)), (ox, 11))
             ox += self.font.size("ON STRIKE")[0] + 16
+        if game.rubble_short:
+            surf.blit(self.font_b.render("RUBBLE SHORTAGE", True, (240, 170, 90)), (ox, 11))
+            ox += self.font.size("RUBBLE SHORTAGE")[0] + 16
         # overarching goal: villages linked by road
         vn = len(game.world.villages)
         vtxt = f"Villages linked: {game.villages_connected}/{vn}"

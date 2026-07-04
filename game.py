@@ -62,6 +62,7 @@ class Game:
 
         # upkeep (salary paid in iced coffee, per completed job — register_action)
         self.wages_due = False        # True while any worker is paused unpaid
+        self.rubble_short = False      # True while road jobs are stalled with no rubble
         self.selected_building = None
 
         # overarching goal: link villages to the road network
@@ -172,6 +173,16 @@ class Game:
             elif was_striking and not self.wages_due:
                 self.log("Wages paid — crew back to work")
             self.economy.update(sim_dt, self.buildings, self.sun)
+
+            # rubble shortage: road jobs queued but no rubble in stock to supply them
+            was_short = self.rubble_short
+            self.rubble_short = (self.jobs.count(BUILD_ROAD) > 0
+                                 and not self.economy.can_afford(config.ROAD_COST))
+            if self.rubble_short and not was_short:
+                self.log("Rubble shortage — roads need rubble. Clean rubble or buy some.")
+            elif was_short and not self.rubble_short:
+                self.log("Rubble restored — road building resuming")
+
             self._update_goal()
             self._auto_trade(sim_dt)
         self._update_messages(real_dt)
