@@ -33,13 +33,18 @@ class Environment:
         return worldgen._hash01(a, b, self.seed + 4242)
 
     def _make_bird(self, i):
-        # A straight-line heading; horizontal only for now (varied in a later pass).
+        # A varied straight-line heading: mostly lateral (sideways), but each bird
+        # gets a vertical component too so some fly diagonally (up- or down-slope),
+        # never purely horizontal. Normalised so every bird travels at BIRD_DRIFT.
         sign = 1.0 if self._h(i, 10) > 0.5 else -1.0
+        vx = (0.4 + 0.6 * self._h(i, 9)) * sign
+        vy = (self._h(i, 13) - 0.5) * 1.2
+        mag = math.hypot(vx, vy) or 1.0
         return {
             "fx": self._h(i, 7),
             "fy": self._h(i, 8),
-            "vx": (0.5 + 0.7 * self._h(i, 9)) * sign * config.BIRD_DRIFT,
-            "vy": 0.0,
+            "vx": vx / mag * config.BIRD_DRIFT,
+            "vy": vy / mag * config.BIRD_DRIFT,
             "scale": config.BIRD_SCALE * (0.8 + 0.5 * self._h(i, 12)),
         }
 
