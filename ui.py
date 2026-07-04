@@ -261,6 +261,16 @@ class UI:
         self._button(surf, rp, "Pause" if not game.paused else "Paused", mouse, on=game.paused)
         self._add(rp, "pause")
 
+        # clock + calendar, just left of the speed controls (starts at today's date)
+        dt = game.game_datetime()
+        clk = dt.strftime("%H:%M")
+        cal = dt.strftime("%a %d %b")
+        calw = self.font_s.size(cal)[0]
+        clkw = self.font.size(clk)[0]
+        cx = bx - 10 - max(clkw, calw)
+        surf.blit(self.font.render(clk, True, config.COL_ACCENT), (cx, 3))
+        surf.blit(self.font_s.render(cal, True, config.COL_TEXT_DIM), (cx, 24))
+
     # ------------------------------------------------------------------ side panel
     def _draw_panel(self, surf, game, mouse):
         panel = pygame.Rect(self.sw - PANEL_W, TOP_H, PANEL_W, self.sh - TOP_H - BOT_H)

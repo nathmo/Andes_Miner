@@ -80,6 +80,8 @@ def save_game(game, path=config.SAVE_FILE):
         "speed_index": game.speed_index,
         "paused": game.paused,
         "time_of_day": game.time_of_day,
+        "start_date": game.start_date,
+        "game_day": game.game_day,
         "auto_cash_min": game.auto_cash_min,
         "auto_coffee_min": game.auto_coffee_min,
         "auto_smart_sell": game.auto_smart_sell,
@@ -167,7 +169,9 @@ def load_game(path=config.SAVE_FILE, camera=None):
         camera.zoom = cam.get("zoom", camera.zoom)
     game.speed_index = data.get("speed_index", 0)
     game.paused = data.get("paused", False)
-    game.time_of_day = data.get("time_of_day", 0.35)
+    game.time_of_day = data.get("time_of_day", config.DAY_START_HOUR / 24.0)
+    game.start_date = data.get("start_date", game.start_date)
+    game.game_day = data.get("game_day", 0)
     game.auto_cash_min = data.get("auto_cash_min", config.AUTO_CASH_MIN)
     game.auto_coffee_min = data.get("auto_coffee_min", config.AUTO_COFFEE_MIN)
     game.auto_smart_sell = data.get("auto_smart_sell", False)

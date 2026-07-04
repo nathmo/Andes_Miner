@@ -24,9 +24,13 @@ BACKUP_INTERVAL = 120.0          # real seconds between rolling backups
 BACKUP_SLOTS = 8
 BACKUP_FILE = "andes_backup_{}.json"
 
-# Day/night: the sun rises and sets over DAY_LENGTH sim-seconds. Sun output (0 at
-# night, 1 at noon) both dims the world and scales Solar Array yield.
-DAY_LENGTH = 120.0
+# Day/night & the in-game clock. One game hour lasts GAME_HOUR_SECONDS sim-seconds
+# at 1x, so a full 24h day = DAY_LENGTH sim-seconds. The sun (0 at night, 1 at
+# noon) both dims the world and scales Solar Array yield; the clock/calendar in the
+# top bar read the same time_of_day. The calendar starts at today's real date.
+GAME_HOUR_SECONDS = 30.0         # real seconds per in-game hour at 1x speed
+DAY_LENGTH = 24.0 * GAME_HOUR_SECONDS   # = 720s: sim-seconds for a full day
+DAY_START_HOUR = 8.0             # clock starts here (08:00) on a new game
 NIGHT_MAX_ALPHA = 115            # deepest-night darkening overlay alpha
 
 # ------------------------------------------------------------------ sky ambiance

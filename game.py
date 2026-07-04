@@ -10,6 +10,7 @@ on foot. So building vehicles trades hand-labour for faster specialised units.
 
 import heapq
 import math
+import datetime
 
 import config
 import hexgrid
@@ -53,8 +54,11 @@ class Game:
         self.paused = False
 
         # environment: day/night. time_of_day in [0,1); sun 0 at night, 1 at noon.
-        self.time_of_day = 0.35       # start mid-morning
+        # The calendar starts at today's real date; game_day counts days elapsed.
+        self.time_of_day = config.DAY_START_HOUR / 24.0   # start at 08:00
         self.sun = 1.0
+        self.start_date = datetime.date.today().isoformat()
+        self.game_day = 0
 
         # upkeep (salary paid in iced coffee, per completed job — register_action)
         self.wages_due = False        # True while any worker is paused unpaid
@@ -133,9 +137,21 @@ class Game:
     # ------------------------------------------------------------------ update
     def _advance_time(self, sim_dt):
         """Advance the day/night clock and recompute the sun factor (raised cosine
-        peaking at noon, zero through the night)."""
-        self.time_of_day = (self.time_of_day + sim_dt / config.DAY_LENGTH) % 1.0
+        peaking at noon, zero through the night). Rolls the calendar over midnight."""
+        raw = self.time_of_day + sim_dt / config.DAY_LENGTH
+        self.game_day += int(raw)                   # whole days crossed (robust to big steps)
+        self.time_of_day = raw % 1.0
         self.sun = max(0.0, math.cos((self.time_of_day - 0.5) * 2.0 * math.pi))
+
+    def game_datetime(self):
+        """Current in-game date & time as a datetime (calendar starts at today)."""
+        try:
+            base = datetime.date.fromisoformat(self.start_date)
+        except (ValueError, TypeError):
+            base = datetime.date.today()
+        secs = int(self.time_of_day * 86400)
+        return (datetime.datetime(base.year, base.month, base.day)
+                + datetime.timedelta(days=self.game_day, seconds=secs))
 
     def update(self, sim_dt, real_dt):
         if not self.paused and sim_dt > 0:
