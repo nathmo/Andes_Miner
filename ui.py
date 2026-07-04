@@ -8,7 +8,7 @@ clicks that land on a panel.
 import pygame
 import config
 import assets
-from tiles import STATE_NAME, ROCK
+from tiles import ROCK, RUBBLE, EXCAVATED
 
 
 TOP_H = 40
@@ -217,15 +217,23 @@ class UI:
             return
         q, r = game.hover_hex
         t = game.world.get_tile(q, r)
-        lines = [(f"{t.name}  ({q},{r})", config.COL_TEXT),
-                 (f"State: {STATE_NAME[t.state]}", config.COL_TEXT_DIM)]
+        # A descriptive name from state + rock: "Rhyolite", "Diorite rubble",
+        # "Excavated basalt", "Road". Only solid rock still holds ore to mine.
+        rock = t.name
         if t.state == ROCK:
-            lines.append((f"Hardness: {t.hardness_label}  ({t.mine_time:.1f}s)", config.COL_TEXT))
+            title = rock
+        elif t.state == RUBBLE:
+            title = f"{rock} rubble"
+        elif t.state == EXCAVATED:
+            title = f"Excavated {rock.lower()}"
+        else:
+            title = "Road"
+        lines = [(f"{title}  ({q},{r})", config.COL_TEXT)]
+        if t.state == ROCK:
+            lines.append((f"Hardness: {t.hardness_label}  ({t.mine_time:.1f}s)", config.COL_TEXT_DIM))
             if t.ore_type:
                 oc = config.COL_ORE_IRON if t.ore_type == "iron" else config.COL_ORE_COPPER
-                lines.append((f"Contains: {t.ore_type.title()} ore  (x{t.ore_amount})", oc))
-            else:
-                lines.append(("Contains: no ore", config.COL_TEXT_DIM))
+                lines.append((f"Drops {t.ore_amount} {t.ore_type} ore when mined", oc))
             reach = game.max_mine_reach()
             in_range = game.world.mineable(t, reach)
             lines.append(("In mining range" if in_range else f"Needs road within {reach} tiles",
