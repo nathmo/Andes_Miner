@@ -352,35 +352,42 @@ class UI:
 
     # ------------------------------------------------------------------ alerts
     def _draw_alerts(self, surf, game):
-        """Banners stacked under the top bar, centred over the map. Critical
-        conditions blink red (act now); softer guidance shows in calm amber. Each
-        spells out the fix."""
-        alerts = []      # (text, is_critical)
+        """Big pulsing banners stacked under the top bar, centred over the map.
+        red = act now, amber = attention, green = tutorial guidance. Each spells
+        out exactly what to do."""
+        banners = []      # (text, kind)
         if game.wages_due:
-            alerts.append(("ON STRIKE  -  buy iced coffee to pay your workers!", True))
+            banners.append(("ON STRIKE  -  buy iced coffee to pay your workers!", "red"))
         if game.rubble_short:
-            alerts.append(("RUBBLE SHORTAGE  -  roads cannot be built without rubble!", True))
+            banners.append(("RUBBLE SHORTAGE  -  roads cannot be built without rubble!", "red"))
         if game.power_blackout:
-            alerts.append(("BLACKOUT  -  no cash for grid power; machines are stalled!", True))
+            banners.append(("BLACKOUT  -  no cash for grid power; machines are stalled!", "red"))
         if game.mine_stuck:
-            alerts.append(("NOTHING IN REACH TO MINE  -  build a Road to dig deeper!", False))
-        if not alerts:
+            banners.append(("NOTHING IN REACH TO MINE  -  build a Road to dig deeper!", "amber"))
+        if game.tut_excavate:
+            banners.append(("PICK THE EXCAVATE TOOL AND CLICK ROCKS TO MINE THEM", "green"))
+        if game.tut_clean:
+            banners.append(("USE THE CLEAN TOOL ON RUBBLE  -  click each tile or drag a box", "green"))
+        if not banners:
             return
         # Blink: a smooth pulse in [0.35, 1.0] (never fully off, so always readable).
         pulse = 0.35 + 0.65 * abs(math.sin(pygame.time.get_ticks() * 0.006))
+        # Per-kind backdrop RGB + an edge colour that brightens with the pulse.
+        styles = {
+            "red":   ((120, 12, 12), (255, int(50 + 90 * pulse), int(50 + 90 * pulse))),
+            "amber": ((120, 82, 12), (240, int(170 + 60 * pulse), int(70 + 60 * pulse))),
+            "green": ((16, 92, 40),  (int(90 + 40 * pulse), 240, int(120 + 60 * pulse))),
+        }
         cx = (self.sw - PANEL_W) // 2                    # centre of the play area
         y = TOP_H + 10
-        for text, critical in alerts:
+        for text, kind in banners:
+            bg_rgb, edge = styles[kind]
             tw, th = self.font_alert.size(text)
             box = pygame.Rect(0, 0, tw + 30, th + 14)
             box.centerx, box.y = cx, y
             bg = pygame.Surface(box.size, pygame.SRCALPHA)
-            if critical:
-                bg.fill((120, 12, 12, int(70 + 150 * pulse)))        # pulsing red backdrop
-                edge = (255, int(50 + 90 * pulse), int(50 + 90 * pulse))
-            else:
-                bg.fill((120, 82, 12, int(60 + 120 * pulse)))        # calm amber backdrop
-                edge = (240, int(170 + 60 * pulse), int(70 + 60 * pulse))
+            alpha = int(70 + 150 * pulse) if kind == "red" else int(60 + 120 * pulse)
+            bg.fill((*bg_rgb, alpha))
             surf.blit(bg, box.topleft)
             pygame.draw.rect(surf, edge, box, 2, border_radius=6)
             txt = self.font_alert.render(text, True, (255, 255, 255))

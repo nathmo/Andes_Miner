@@ -67,7 +67,10 @@ class Game:
         self.power_blackout = False    # True while machines are stopped for lack of cash
         self.mine_stuck = False        # True when nothing in reach is left to mine (build a road)
         self._mine_check_t = 0.0       # throttle for the (mildly costly) reach scan
-        self.rubble_hinted = False     # one-time "use the Clean tool" nudge on first rubble
+        self.rubble_hinted = False     # guard so the first-rubble nudge fires only once
+        self.tut_excavate = True       # start-of-game green banner: pick Excavate and mine
+        self.tut_clean = False         # green banner after first rubble: use the Clean tool
+        self._tut_clean_t = 0.0        # auto-dismiss timer for the clean banner
         self.selected_building = None
 
         # overarching goal: link villages to the road network
@@ -209,6 +212,12 @@ class Game:
                 elif was_stuck and not self.mine_stuck:
                     self.log("Fresh rock in reach — mining can resume")
 
+            # tutorial: let the "use the Clean tool" banner fade out on its own
+            if self.tut_clean:
+                self._tut_clean_t += sim_dt
+                if self._tut_clean_t >= config.CLEAN_HINT_SECONDS:
+                    self.tut_clean = False
+
             self._update_goal()
             self._auto_trade(sim_dt)
         self._update_messages(real_dt)
@@ -293,13 +302,14 @@ class Game:
         return False
 
     def hint_rubble(self):
-        """One-time nudge the first time mining produces rubble: how to clear it.
-        Called from the mine job's completion; persisted so it fires only once."""
+        """The first time mining produces rubble, raise a green banner teaching the
+        Clean tool. Fires only once (persisted); the banner self-dismisses on a
+        timer or when the player marks rubble to clean."""
         if self.rubble_hinted:
             return
         self.rubble_hinted = True
-        self.log("Mining leaves rubble — switch to the Clean tool to clear it.")
-        self.log("Click each rubble tile, or drag a box to clean a whole area.")
+        self.tut_clean = True
+        self._tut_clean_t = 0.0
 
     def designate(self, q, r):
         """Work order on a tile, filtered by the active tool: the Excavate tool
@@ -309,9 +319,11 @@ class Game:
             if self.world.mineable(t, self.max_mine_reach()) and not t.marked:
                 t.marked = True
                 self.jobs.add(MINE, q, r)
+                self.tut_excavate = False        # they've started mining
         elif t.state == RUBBLE and self.tool != "excavate":
             if not self.jobs.has_job(q, r, CLEAN):
                 self.jobs.add(CLEAN, q, r)
+                self.tut_clean = False           # they've used the Clean tool
 
     def undesignate(self, q, r):
         t = self.world.get_tile(q, r)

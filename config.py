@@ -148,6 +148,8 @@ PASSABLE_STATES = (1, 2, 3)       # RUBBLE, EXCAVATED, ROAD
 MINE_ROAD_RANGE = 2               # baseline reach (hand workers / small miner): road within N steps
 MAX_MINE_REACH = 4               # largest tier reach (mega); keeps far MINE jobs valid to claim
 
+CLEAN_HINT_SECONDS = 20.0         # how long the first-rubble "use the Clean tool" banner lingers
+
 # Terrain traversal speed multipliers, keyed by TileState int (RUBBLE=1,
 # EXCAVATED=2, ROAD=3). Roads speed everyone up; loose rubble slows them down.
 TERRAIN_SPEED = {1: 0.55, 2: 1.0, 3: 1.6}

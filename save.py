@@ -91,6 +91,8 @@ def save_game(game, path=config.SAVE_FILE):
         "show_birds": game.show_birds,
         "ui_scale": game.ui_scale,
         "rubble_hinted": game.rubble_hinted,
+        "tut_excavate": game.tut_excavate,
+        "tut_clean": game.tut_clean,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -183,8 +185,10 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.show_clouds = data.get("show_clouds", True)
     game.show_birds = data.get("show_birds", False)
     game.ui_scale = data.get("ui_scale", 1.5)
-    # Legacy saves predate the flag; assume the player has already seen rubble so
-    # the one-time Clean-tool hint never re-fires when loading an old game.
+    # Legacy saves predate these flags; a loaded game is already underway, so
+    # suppress the one-time tutorial banners rather than re-showing them.
     game.rubble_hinted = data.get("rubble_hinted", True)
+    game.tut_excavate = data.get("tut_excavate", False)
+    game.tut_clean = data.get("tut_clean", False)
     game._ensure_depot()          # add the depot to saves that predate it
     return game
