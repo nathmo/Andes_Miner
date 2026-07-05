@@ -67,6 +67,7 @@ class Game:
         self.power_blackout = False    # True while machines are stopped for lack of cash
         self.mine_stuck = False        # True when nothing in reach is left to mine (build a road)
         self._mine_check_t = 0.0       # throttle for the (mildly costly) reach scan
+        self.rubble_hinted = False     # one-time "use the Clean tool" nudge on first rubble
         self.selected_building = None
 
         # overarching goal: link villages to the road network
@@ -290,6 +291,15 @@ class Game:
             if not frontier:
                 break
         return False
+
+    def hint_rubble(self):
+        """One-time nudge the first time mining produces rubble: how to clear it.
+        Called from the mine job's completion; persisted so it fires only once."""
+        if self.rubble_hinted:
+            return
+        self.rubble_hinted = True
+        self.log("Mining leaves rubble — switch to the Clean tool to clear it.")
+        self.log("Click each rubble tile, or drag a box to clean a whole area.")
 
     def designate(self, q, r):
         """Work order on a tile, filtered by the active tool: the Excavate tool

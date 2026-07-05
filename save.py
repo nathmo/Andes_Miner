@@ -90,6 +90,7 @@ def save_game(game, path=config.SAVE_FILE):
         "show_clouds": game.show_clouds,
         "show_birds": game.show_birds,
         "ui_scale": game.ui_scale,
+        "rubble_hinted": game.rubble_hinted,
     }
     with open(path, "w") as f:
         json.dump(data, f)
@@ -182,5 +183,8 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game.show_clouds = data.get("show_clouds", True)
     game.show_birds = data.get("show_birds", False)
     game.ui_scale = data.get("ui_scale", 1.5)
+    # Legacy saves predate the flag; assume the player has already seen rubble so
+    # the one-time Clean-tool hint never re-fires when loading an old game.
+    game.rubble_hinted = data.get("rubble_hinted", True)
     game._ensure_depot()          # add the depot to saves that predate it
     return game

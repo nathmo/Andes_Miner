@@ -255,7 +255,8 @@ class Agent:
         world = game.world
         t = world.get_tile(job.q, job.r)
         if job.jtype == MINE:
-            world.mine(t)
+            world.mine(t)                             # rock -> rubble
+            game.hint_rubble()                        # first-rubble "use Clean tool" nudge
             if t.drops:
                 game.jobs.add(HAUL, t.q, t.r)         # transporters auto-haul the ore
             game.jobs.add(CLEAN, t.q, t.r)            # bulldozers auto-clean
