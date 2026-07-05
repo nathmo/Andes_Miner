@@ -37,10 +37,10 @@ NIGHT_MAX_ALPHA = 115            # deepest-night darkening overlay alpha
 # Clouds and condors are anchored to the WORLD, so they pan and zoom with the map
 # (not pinned to the screen). Clouds are an infinite lattice thinned by CLOUD_FILL;
 # birds are a few wandering instances spread over a world band around the camera.
-CLOUD_SPACING = 640.0            # world px between cloud lattice cells (bigger = sparser)
+CLOUD_SPACING = 940.0            # world px between cloud lattice cells (bigger = sparser)
 CLOUD_FILL = 0.6                 # fraction of lattice cells that hold a cloud
 CLOUD_DRIFT_PX = 6.0             # world px/sec the whole cloud field drifts sideways
-CLOUD_SCALE = 1.2                # cloud sprite size (world px per sprite px at zoom 1)
+CLOUD_SCALE = 2                 # cloud sprite size (world px per sprite px at zoom 1)
 SKY_BIRDS = 6                    # condor instances (kept low: sparse sky)
 SKY_SPAN_W = 2400.0             # world-px width of the bird wrap-band around the camera
 SKY_SPAN_H = 1600.0             # world-px height of the bird wrap-band
@@ -358,7 +358,7 @@ START_INVENTORY = {"iron": 0, "copper": 0}
 # it personally completes, so idle (or striking) workers cost nothing and there
 # is no clock pressure. Run out of coffee and a worker pauses until you can pay.
 JAMMIES_START = 100
-SELL_BATCH = 5                    # units sold per click
+SELL_BATCH = 1                    # units sold per click
 # Each sell price is set to roughly 3x the good's *embodied* electricity cost — the
 # sum of MACHINE_KWH_PER_OP * KWH_PRICE over its whole production chain (a solar
 # panel pays for its silica + copper too). So selling anything you make always beats
@@ -372,14 +372,14 @@ SELL_PRICES = {                  # jammies earned per unit sold
 }
 COFFEE_START = 20                 # iced coffees in stock at the start
 COFFEE_PRICE = 1                 # jammies per iced coffee
-COFFEE_BATCH = 3                 # coffees bought per click
+COFFEE_BATCH = 1                 # coffees bought per click
 WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it drinks
 
 # Buy materials from the market: the metals (iron, copper) to unblock building
 # when you're mining-starved, plus silicon/lithium you can't make early. Buy price
 # sits above sell price (a spread). Higher-tier vehicles need some bought in.
 BUYABLE = ["rubble", "iron", "copper", "silicon", "lithium"]
-BUY_BATCH = 3                     # units bought per click
+BUY_BATCH = 1                     # units bought per click
 # Buy prices sit above the matching sell price (a spread), so there is never a
 # buy-low/sell-high arbitrage — buy and sell share the same market multiplier, so
 # the spread is preserved at every price level.
