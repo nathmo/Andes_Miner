@@ -5,23 +5,15 @@
 You are the **Overseer**: a camera over an endless Andean slope. Mark rock for
 mining, and your workers dig it out, haul the ore home, clear rubble, and lay
 roads. Refine ore into metal, build a vehicle workshop, and grow from three
-workers with hand tools into a fleet of mining machines. No win, no lose — build
-at your own pace.
+workers with hand tools into a fleet of mining machines. 
+As you reach villages, connect them together with a road network while keeping an eye on your CO2 emmission by switching to renewable energy.
 
 ![Andes gameplay: roads radiating from HQ across an Andean slope of shaded hex cubes](docs/screenshot.png)
 
-Blend of **Lego Rock Raiders** (dig, haul, vehicles) and **Factorio** (roads,
-processing chains). Built in plain, readable Python with **pygame-ce**.
-
-## The slope / movement rule
-Tiles are pointy-top hexes shaded as isometric cubes. The two **vertical** edges
-(straight east/west) are **blocked** — you move only across the four slanted
-edges (NE/NW/SE/SW), so every step reads as climbing stairs up or down the
-slope. The map still connects: going "east" is a NE→SE zig-zag.
-
-Press **SPACE** at the summit splash to zoom in and start.
+the game is inspired by a blend of **Lego Rock Raiders** (dig, haul, vehicles) and **Factorio** (processing, production graph). Built in plain Python with **pygame-ce**.
 
 ## Controls
+you can do everything via point and click but if you do get hooked and want to be more efficient : 
 - **Excavate tool** (`M`) — LMB marks rock for mining (within your machines'
   reach of a road); drag to box-mark many. With a **Mining Planner** built,
   box-selecting ore beyond reach auto-plans the dig + road corridor out to it.
@@ -47,24 +39,6 @@ Press **SPACE** at the summit splash to zoom in and start.
 - **Click a building** — opens its panel; toggle it, or set a Warehouse's auto-sell.
 - **Space** pause · **1 / 2 / 3** speed · **F5** save · **F9** load/roll-back menu · **Esc** pan tool.
 
-## Loop
-Cleaning rubble yields **rubble** — the bootstrap material. Your first **Simple
-Oven** and every **Road** are paid for in rubble, so you're never stuck needing
-metal before you can make metal. From there:
-
-Mine → clean rubble (→ rubble) → ore drops hauled to HQ → build an **Oven**
-(ore→metal) → get iron & copper → build a **Vehicle Workshop** → manufacture
-mining machines, bulldozers, transporters, up to the **Mega Machine** → add a
-**Crusher** + **Arc Furnace** to double your metal yield → recruit more workers.
-Every vehicle needs one worker to crew it; spare workers labour on foot.
-
-**Automation & roads.** You only ever *order* two things: **mining** (mark the
-rock) and **road building**. Everything else self-organises — transporters
-auto-haul ore, bulldozers auto-clear rubble, and workers only step in on those
-jobs when you haven't built a vehicle for them yet (so you don't waste hands on
-work a machine could do). Lay **roads** to move faster; loose **rubble** slows
-everyone down. And once you build the **Arc Furnace**, the poor-yield **Oven**
-auto-stops so ore isn't wasted (you can force it back on from its panel).
 
 ## The bigger game — goal, market, energy
 - **Goal.** Villages are scattered across the slope; the objective is to reach and
@@ -78,18 +52,8 @@ auto-stops so ore isn't wasted (you can force it back on from its panel).
 - **Energy.** Machines draw power. Buy it from the grid (auto, with jammies) or
   build **Solar Arrays** — a full material chain runs rubble → SiO2 → solar panels,
   and lithium (from spodumene via an Electrolysis Plant) feeds **Battery Factories**
-  and **Grid Batteries** that store daytime solar for the night. Reinjecting clean
-  surplus greens the grid's carbon intensity for everyone; run out of cash and the
-  machines stop (workers keep going). A **day/night cycle** dims the world and sets
-  solar yield. A **Warehouse** auto-sells to hold cash and coffee above thresholds.
-
-## Money & upkeep — jammies & iced coffee
-Sell any stockpiled resource for **jammies** (the game's money) from the **Trade**
-tab. Spend jammies on **iced coffee** — your workers' wages. Wages are
-**action-based, not timed**: a worker drinks one iced coffee for roughly every ten
-jobs it finishes, so idle workers cost nothing and there's no clock pressure. Run
-out of coffee and that worker pauses until you can pay it. Prices and rates all
-live in [`config.py`](config.py).
+  and **Grid Batteries** that store daytime solar for the night. Reinjecting clean surplus lower the grid's carbon intensity for everyone; run out of cash and the
+  machines stop (workers keep going until their iced coffee run out). A **day/night cycle** dims the world and sets solar yield. 
 
 ## Download & play
 CI builds a Windows `.exe`, a Debian/Ubuntu `.deb`, and a macOS `.app` on every
@@ -131,28 +95,8 @@ pyinstaller --onefile --windowed --name Andes --add-data "assets;assets" main.py
 get a `.app` bundle.)
 
 ## Art
-Starter sprites live in `assets/` — one per worker, vehicle, and building, plus
-one per **tile** (each rock type as an isometric cube, and road / rubble /
-excavated floor). Edit or replace any of them and the game picks up the change
-on next launch. Delete a PNG to fall back to the code-drawn shape. To regenerate
-the whole set from scratch:
-```
-python make_assets.py
-```
-Filenames are the entity/tile key (e.g. `miner_s.png`, `oven.png`,
-`tile_granite.png`, `tile_road.png`).
-
-**Tile dimensions matter:** tiles are pointy-top hexes and must keep the ratio
-`W : H = sqrt(3) : 2` (e.g. 111×128) with the hexagon filling the canvas
-edge-to-edge — otherwise they won't line up on the grid. The generated PNGs are
-exact templates to trace; full details in [`assets/.keep`](assets/.keep).
+Starter sprites live in `assets/`. They are a mix of google found texture, from scratch MS paint drawn or generated image.
 
 ## Tuning
 Every number (mining times, ore yields, costs, speeds, colours) lives in
 [`config.py`](config.py). Change balance there without touching game logic.
-
-## Layout
-`main` loop · `splash` intro · `game` wiring · `world`/`worldgen`/`tiles` map ·
-`hexgrid` math · `camera` · `render` · `environment` (sky) · `pathfinding` ·
-`jobs` · `entities` · `buildings` · `economy` (stockpile/market/energy) · `ui` ·
-`input` · `assets` · `save` (+ rolling backups).
