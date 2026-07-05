@@ -52,7 +52,7 @@ HEX_SIZE = 34                     # centre-to-vertex radius at zoom 1.0 (pointy-
 CHUNK_SIZE = 16                   # hexes per chunk edge (chunk = CHUNK_SIZE x CHUNK_SIZE)
 
 MIN_ZOOM = 0.35
-MAX_ZOOM = 2.4
+MAX_ZOOM = 9.6                    # 4x the old ceiling — zoom right down onto the grid
 ZOOM_STEP = 1.12                  # multiplier per wheel notch
 
 # Splash intro: open far out on the summit, then zoom down to HQ on SPACE.

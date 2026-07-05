@@ -287,7 +287,7 @@ class Renderer:
             col = info["color"]
             s = size * 0.7
             rect = pygame.Rect(0, 0, s * 1.4, s * 1.4)
-            rect.center = (cx, cy - s * 0.3)
+            rect.center = (cx, cy - s * 0.39)     # lifted 30% higher on the tile
             if not b.built:
                 # ghost + progress
                 ghost = pygame.Surface(rect.size, pygame.SRCALPHA)
