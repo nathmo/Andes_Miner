@@ -65,6 +65,8 @@ class Game:
         self.wages_due = False        # True while any worker is paused unpaid
         self.rubble_short = False      # True while road jobs are stalled with no rubble
         self.power_blackout = False    # True while machines are stopped for lack of cash
+        self.mine_stuck = False        # True when nothing in reach is left to mine (build a road)
+        self._mine_check_t = 0.0       # throttle for the (mildly costly) reach scan
         self.selected_building = None
 
         # overarching goal: link villages to the road network
@@ -194,6 +196,18 @@ class Game:
             elif was_black and not self.power_blackout:
                 self.log("Power restored — machines running again")
 
+            # mining stalled: nothing in reach left to dig — nudge to build a road.
+            # Rechecked at most ~once a game-second (the scan touches the frontier).
+            self._mine_check_t += sim_dt
+            if self._mine_check_t >= 1.0:
+                self._mine_check_t = 0.0
+                was_stuck = self.mine_stuck
+                self.mine_stuck = self._compute_mine_stuck()
+                if self.mine_stuck and not was_stuck:
+                    self.log("Nothing in reach to mine — build a Road to dig deeper.")
+                elif was_stuck and not self.mine_stuck:
+                    self.log("Fresh rock in reach — mining can resume")
+
             self._update_goal()
             self._auto_trade(sim_dt)
         self._update_messages(real_dt)
@@ -239,6 +253,43 @@ class Game:
             if MINE in config.VEHICLES[v.kind]["jobs"]:
                 reach = max(reach, config.VEHICLES[v.kind].get("mine_reach", config.MINE_ROAD_RANGE))
         return reach
+
+    def _compute_mine_stuck(self):
+        """True when no mining is queued AND no rock is currently within reach, so
+        the player has dug out to the road-range limit and must lay road to go on.
+        The frontier scan only runs when the MINE queue is empty (the only time the
+        player could actually be stuck), so it stays cheap during normal play."""
+        if self.jobs.count(MINE) > 0:
+            return False
+        return not self._any_mineable_rock(self.max_mine_reach())
+
+    def _any_mineable_rock(self, reach):
+        """BFS out from the road network through passable tiles up to (reach-1)
+        steps; if any solid, non-sky rock touches a visited tile it's within mining
+        reach. Mirrors world.mineable's road-range rule over the whole frontier."""
+        w = self.world
+        roads = w.road_tiles
+        if not roads:
+            return False
+        seen = set(roads)
+        frontier = list(roads)                 # depth 0 = road tiles
+        for depth in range(reach):             # frontier tiles are always within reach-1
+            nxt = []
+            for (cq, cr) in frontier:
+                for (nq, nr) in hexgrid.walkable_neighbors(cq, cr):
+                    if (nq, nr) in seen:
+                        continue
+                    t = w.get_tile(nq, nr)
+                    if t.state == ROCK:
+                        if not w.is_sky(nq, nr):
+                            return True         # reachable solid rock — not stuck
+                    elif t.passable() and depth < reach - 1:
+                        seen.add((nq, nr))
+                        nxt.append((nq, nr))
+            frontier = nxt
+            if not frontier:
+                break
+        return False
 
     def designate(self, q, r):
         """Work order on a tile, filtered by the active tool: the Excavate tool

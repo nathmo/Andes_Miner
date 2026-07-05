@@ -352,29 +352,36 @@ class UI:
 
     # ------------------------------------------------------------------ alerts
     def _draw_alerts(self, surf, game):
-        """Big, blinking red banners for conditions the player must act on now.
-        Each spells out the fix, stacked under the top bar, centred over the map."""
-        alerts = []
+        """Banners stacked under the top bar, centred over the map. Critical
+        conditions blink red (act now); softer guidance shows in calm amber. Each
+        spells out the fix."""
+        alerts = []      # (text, is_critical)
         if game.wages_due:
-            alerts.append("ON STRIKE  -  buy iced coffee to pay your workers!")
+            alerts.append(("ON STRIKE  -  buy iced coffee to pay your workers!", True))
         if game.rubble_short:
-            alerts.append("RUBBLE SHORTAGE  -  roads cannot be built without rubble!")
+            alerts.append(("RUBBLE SHORTAGE  -  roads cannot be built without rubble!", True))
         if game.power_blackout:
-            alerts.append("BLACKOUT  -  no cash for grid power; machines are stalled!")
+            alerts.append(("BLACKOUT  -  no cash for grid power; machines are stalled!", True))
+        if game.mine_stuck:
+            alerts.append(("NOTHING IN REACH TO MINE  -  build a Road to dig deeper!", False))
         if not alerts:
             return
         # Blink: a smooth pulse in [0.35, 1.0] (never fully off, so always readable).
         pulse = 0.35 + 0.65 * abs(math.sin(pygame.time.get_ticks() * 0.006))
         cx = (self.sw - PANEL_W) // 2                    # centre of the play area
         y = TOP_H + 10
-        for text in alerts:
+        for text, critical in alerts:
             tw, th = self.font_alert.size(text)
             box = pygame.Rect(0, 0, tw + 30, th + 14)
             box.centerx, box.y = cx, y
             bg = pygame.Surface(box.size, pygame.SRCALPHA)
-            bg.fill((120, 12, 12, int(70 + 150 * pulse)))    # pulsing red backdrop
+            if critical:
+                bg.fill((120, 12, 12, int(70 + 150 * pulse)))        # pulsing red backdrop
+                edge = (255, int(50 + 90 * pulse), int(50 + 90 * pulse))
+            else:
+                bg.fill((120, 82, 12, int(60 + 120 * pulse)))        # calm amber backdrop
+                edge = (240, int(170 + 60 * pulse), int(70 + 60 * pulse))
             surf.blit(bg, box.topleft)
-            edge = (255, int(50 + 90 * pulse), int(50 + 90 * pulse))
             pygame.draw.rect(surf, edge, box, 2, border_radius=6)
             txt = self.font_alert.render(text, True, (255, 255, 255))
             txt.set_alpha(int(150 + 105 * pulse))
