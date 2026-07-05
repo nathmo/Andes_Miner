@@ -251,8 +251,10 @@ class UI:
         pygame.draw.rect(surf, (40, 44, 52), bar)
         pygame.draw.rect(surf, ccol, (bar.x, bar.y, int(bar.w * frac), bar.h))
         y += 18
-        surf.blit(self.font_s.render(f"Emissions: {econ.emissions_total:.0f} kg  "
-                                     f"(now {econ.emissions_rate:.1f}/s)", True, (210, 160, 140)),
+        etot = (f"{econ.emissions_total / 1000:.2f} t" if econ.emissions_total >= 1000
+                else f"{econ.emissions_total:.0f} kg")
+        surf.blit(self.font_s.render(f"Emissions: {etot}  "
+                                     f"(now {econ.emissions_rate:.2f} kg/s)", True, (210, 160, 140)),
                   (box.x + 14, y))
         self._sparkline(surf, econ.emissions_hist, pygame.Rect(box.x + 210, y - 1, 200, 15), (210, 150, 120))
         y += 18

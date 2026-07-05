@@ -264,23 +264,35 @@ COL_CABLE = (150, 170, 190)      # the straight cable line drawn back to HQ
 # a machine draws power = MACHINE_KWH_PER_OP / recipe_time, so total energy per
 # operation is fixed regardless of how long the recipe takes. Solar Arrays generate
 # power; any shortfall is auto-bought from the grid. No cash -> machines stop.
-KWH_PRICE = 0.04                 # base jammies per kWh of grid power (drifts on the market)
-SOLAR_ARRAY_OUTPUT = 8.0         # power one Solar Array makes at full sun
-POWER_HISTORY = 64               # samples kept for the solar-production & consumption trends
-MACHINE_KWH_PER_OP = {           # energy (kWh) each machine uses per completed operation
-    "oven": 6, "crusher": 2, "arc_furnace": 3,
-    "silica_kiln": 8, "solar_foundry": 60, "electrolysis": 70, "battery_factory": 128,
-}
-BATTERY_CAPACITY = 60.0          # energy stored per Grid Battery
-BATTERY_CHARGE_EFF = 0.9        # fraction of surplus solar that makes it into storage
+KWH_PRICE = 0.06                 # base jammies per kWh of grid power (drifts on the market)
 
-# Grid carbon intensity (kg CO2 / MWh). Starts dirty; reinjecting surplus clean
-# power greens it for everyone, otherwise it drifts back toward the dirty start.
+# Solar & storage are sized for a ~100 m2 game tile:
+#   Solar Array  = 100 m2 of PV at ~200 W/m2 (20% efficient @ 1000 W/m2) -> ~20 kW peak.
+#   Grid Battery = a utility battery pad on that tile -> ~1 MWh (well within Megapack
+#                  energy density; conservative so a few batteries carry you overnight).
+SOLAR_ARRAY_OUTPUT = 20.0        # kW one Solar Array makes at full sun (100 m2 tile)
+BATTERY_CAPACITY = 1000.0        # kWh stored per Grid Battery
+BATTERY_CHARGE_EFF = 0.9         # fraction of surplus solar that makes it into storage
+POWER_HISTORY = 64               # samples kept for the solar-production & consumption trends
+
+# Energy each machine uses per completed op (kWh). Ordered by real-world intensity:
+# crushing/smelting a batch of metal is cheap; making silicon, lithium metal and
+# battery cells is very energy-hungry. Draw while running = value / recipe_time, so
+# these land at a few kW each (a couple of machines per 20 kW Solar Array).
+MACHINE_KWH_PER_OP = {
+    "oven": 12, "crusher": 3, "arc_furnace": 8,
+    "silica_kiln": 5, "solar_foundry": 40, "electrolysis": 45, "battery_factory": 70,
+}
+
+# Grid carbon intensity (kg CO2 / MWh). Starts dirty (~a gas/coal mix); reinjecting
+# surplus clean solar greens it for everyone, otherwise it drifts back toward dirty.
 GRID_CARBON_START = 420.0
 CARBON_MIN = 30.0
 CARBON_EXPORT_DECAY = 0.9       # greening per unit of exported power
 CARBON_REVERT = 0.5            # re-dirtying per second when not exporting
-CO2_SCALE = 0.0009             # kg CO2 per (power-second * carbon intensity)
+# CO2 (kg) = grid energy drawn (kWh) * carbon intensity (kg/MWh) / 1000. The grid
+# bill treats from_grid * dt as kWh, so this scale is just the kg/MWh -> kg factor.
+CO2_SCALE = 0.001             # = 1/1000 : kg CO2 per (kW grid * dt) per (kg/MWh)
 EMISS_HISTORY = 64             # samples kept for the emissions graph
 
 # ------------------------------------------------------------------ auto-planner
@@ -347,11 +359,16 @@ START_INVENTORY = {"iron": 0, "copper": 0}
 # is no clock pressure. Run out of coffee and a worker pauses until you can pay.
 JAMMIES_START = 100
 SELL_BATCH = 5                    # units sold per click
+# Each sell price is set to roughly 3x the good's *embodied* electricity cost — the
+# sum of MACHINE_KWH_PER_OP * KWH_PRICE over its whole production chain (a solar
+# panel pays for its silica + copper too). So selling anything you make always beats
+# the energy it took to make it, even as the electricity market drifts, but energy
+# is still a visible slice of margin on the power-hungry late-game goods.
 SELL_PRICES = {                  # jammies earned per unit sold
     "rubble": 1, "iron_ore": 2, "copper_ore": 2,
-    "iron_crushed": 3, "copper_crushed": 3, "iron": 6, "copper": 7,
-    "sio2": 2, "silicon": 8, "lithium_salt": 3, "lithium": 10,
-    "solar_panel": 12, "battery_cell": 20,
+    "iron_crushed": 3, "copper_crushed": 3, "iron": 7, "copper": 8,
+    "sio2": 3, "silicon": 10, "lithium_salt": 3, "lithium": 12,
+    "solar_panel": 14, "battery_cell": 30,
 }
 COFFEE_START = 20                 # iced coffees in stock at the start
 COFFEE_PRICE = 1                 # jammies per iced coffee
@@ -363,8 +380,11 @@ WAGE_ACTIONS_PER_COFFEE = 10     # jobs a worker finishes per iced coffee it dri
 # sits above sell price (a spread). Higher-tier vehicles need some bought in.
 BUYABLE = ["rubble", "iron", "copper", "silicon", "lithium"]
 BUY_BATCH = 3                     # units bought per click
+# Buy prices sit above the matching sell price (a spread), so there is never a
+# buy-low/sell-high arbitrage — buy and sell share the same market multiplier, so
+# the spread is preserved at every price level.
 BUY_PRICES = {                   # base jammies per unit bought (item 23 makes it drift)
-    "rubble": 2, "silicon": 12, "lithium": 16, "sio2": 4, "iron": 10, "copper": 12,
+    "rubble": 2, "silicon": 15, "lithium": 18, "sio2": 5, "iron": 11, "copper": 13,
 }
 
 # ------------------------------------------------------------------ stock market
