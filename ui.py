@@ -5,6 +5,8 @@ and handle_click() hit-tests it. point_in_ui() lets input.py ignore world
 clicks that land on a panel.
 """
 
+import math
+
 import pygame
 import config
 import assets
@@ -32,6 +34,7 @@ class UI:
         self.font = pygame.font.SysFont("consolas", 14)
         self.font_b = pygame.font.SysFont("consolas", 14, bold=True)
         self.font_s = pygame.font.SysFont("consolas", 11)
+        self.font_alert = pygame.font.SysFont("consolas", 22, bold=True)  # big blinking warnings
         self.buttons = []
         self._panels = []
         self._icons = {}        # (key, size) -> scaled Surface (or None if missing)
@@ -122,6 +125,7 @@ class UI:
         self._draw_load_menu(target, game, mouse)
         self._draw_tileinfo(target, game)
         self._draw_messages(target, game)
+        self._draw_alerts(target, game)
 
         if self.scale != 1.0:
             surf.blit(pygame.transform.smoothscale(self._surf, (self.real_w, self.real_h)), (0, 0))
@@ -308,19 +312,10 @@ class UI:
             surf.blit(self.font.render(txt, True, config.COL_TEXT), (x + 16, 11))
             x += 16 + self.font.size(txt)[0] + 18
 
-        # worker count (+ strike warning)
+        # worker count (strike/shortage/blackout are shown as big banners below)
         wtxt = f"Workers:{game.num_workers} (foot {len(game.foot_workers)}/veh {game.active_vehicle_count})"
         surf.blit(self.font.render(wtxt, True, config.COL_ACCENT), (x, 11))
         ox = x + self.font.size(wtxt)[0] + 24
-        if game.wages_due:
-            surf.blit(self.font_b.render("ON STRIKE", True, (240, 110, 100)), (ox, 11))
-            ox += self.font.size("ON STRIKE")[0] + 16
-        if game.rubble_short:
-            surf.blit(self.font_b.render("RUBBLE SHORTAGE", True, (240, 170, 90)), (ox, 11))
-            ox += self.font.size("RUBBLE SHORTAGE")[0] + 16
-        if game.power_blackout:
-            surf.blit(self.font_b.render("BLACKOUT", True, (255, 90, 90)), (ox, 11))
-            ox += self.font.size("BLACKOUT")[0] + 16
         # overarching goal: villages linked by road
         vn = len(game.world.villages)
         vtxt = f"Villages linked: {game.villages_connected}/{vn}"
@@ -354,6 +349,37 @@ class UI:
         cx = bx - 10 - max(clkw, calw)
         surf.blit(self.font.render(clk, True, config.COL_ACCENT), (cx, 3))
         surf.blit(self.font_s.render(cal, True, config.COL_TEXT_DIM), (cx, 24))
+
+    # ------------------------------------------------------------------ alerts
+    def _draw_alerts(self, surf, game):
+        """Big, blinking red banners for conditions the player must act on now.
+        Each spells out the fix, stacked under the top bar, centred over the map."""
+        alerts = []
+        if game.wages_due:
+            alerts.append("ON STRIKE  -  buy iced coffee to pay your workers!")
+        if game.rubble_short:
+            alerts.append("RUBBLE SHORTAGE  -  roads cannot be built without rubble!")
+        if game.power_blackout:
+            alerts.append("BLACKOUT  -  no cash for grid power; machines are stalled!")
+        if not alerts:
+            return
+        # Blink: a smooth pulse in [0.35, 1.0] (never fully off, so always readable).
+        pulse = 0.35 + 0.65 * abs(math.sin(pygame.time.get_ticks() * 0.006))
+        cx = (self.sw - PANEL_W) // 2                    # centre of the play area
+        y = TOP_H + 10
+        for text in alerts:
+            tw, th = self.font_alert.size(text)
+            box = pygame.Rect(0, 0, tw + 30, th + 14)
+            box.centerx, box.y = cx, y
+            bg = pygame.Surface(box.size, pygame.SRCALPHA)
+            bg.fill((120, 12, 12, int(70 + 150 * pulse)))    # pulsing red backdrop
+            surf.blit(bg, box.topleft)
+            edge = (255, int(50 + 90 * pulse), int(50 + 90 * pulse))
+            pygame.draw.rect(surf, edge, box, 2, border_radius=6)
+            txt = self.font_alert.render(text, True, (255, 255, 255))
+            txt.set_alpha(int(150 + 105 * pulse))
+            surf.blit(txt, (box.centerx - tw // 2, box.y + 7))
+            y += box.height + 8
 
     # ------------------------------------------------------------------ side panel
     def _draw_panel(self, surf, game, mouse):
