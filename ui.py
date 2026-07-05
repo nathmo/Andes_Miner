@@ -330,9 +330,9 @@ class UI:
 
         # speed / pause on the right
         bx = self.sw - 4
-        # speed buttons
-        labels = [("3x", 2), ("2x", 1), ("1x", 0)]
-        for label, idx in labels:
+        # speed buttons (labels derived from config.SPEED_STEPS; fastest on the right)
+        for idx in range(len(config.SPEED_STEPS) - 1, -1, -1):
+            label = f"{config.SPEED_STEPS[idx]:g}x"
             r = pygame.Rect(bx - 40, 6, 36, 28); bx -= 42
             self._button(surf, r, label, mouse, on=(not game.paused and game.speed_index == idx))
             self._add(r, "speed", idx)
@@ -631,7 +631,9 @@ class UI:
         if b is None:
             return
         is_wh = b.built and b.btype == "warehouse"
-        bw, bh = 250, (190 if is_wh else 96)
+        cost = config.BUILDINGS[b.btype].get("cost", {})
+        can_demolish = config.BUILDINGS[b.btype].get("buildable", True)
+        bw, bh = 250, (190 if is_wh else 96) + (28 if can_demolish else 0)
         box = pygame.Rect(self.sw // 2 - bw // 2, self.sh - BOT_H - bh - 12, bw, bh)
         self._panels.append(box)
         pygame.draw.rect(surf, config.COL_PANEL_LIGHT, box, border_radius=6)
@@ -670,6 +672,16 @@ class UI:
             self._button(surf, rm, f"Sell mode: {'Best value' if game.auto_smart_sell else 'Fixed order'}",
                          mouse, on=game.auto_smart_sell)
             self._add(rm, "wh_smart")
+
+        # Demolish (red, dangerous): removes the building and refunds its build cost.
+        if can_demolish:
+            rDem = pygame.Rect(box.x + 10, box.bottom - 60, bw - 20, 24)
+            hov = rDem.collidepoint(mouse)
+            pygame.draw.rect(surf, (150, 62, 56) if hov else (120, 48, 44), rDem, border_radius=4)
+            pygame.draw.rect(surf, (205, 95, 84), rDem, 1, border_radius=4)
+            lbl = f"Demolish  (+{self._cost_str(cost)})" if cost else "Demolish"
+            surf.blit(self.font.render(lbl, True, (245, 224, 220)), (rDem.x + 8, rDem.y + 4))
+            self._add(rDem, "demolish_building")
 
         if b.built:
             rT = pygame.Rect(box.x + 10, box.bottom - 30, 150, 24)
@@ -769,6 +781,8 @@ class UI:
             game.want_quit = True
         elif action == "toggle_building":
             game.toggle_selected_building()
+        elif action == "demolish_building":
+            game.demolish_selected_building()
         elif action == "close_building":
             game.selected_building = None
         elif action == "wh_cash_dn":

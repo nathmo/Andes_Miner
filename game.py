@@ -491,6 +491,40 @@ class Game:
         b.enabled = not b.enabled
         self.log(f"{b.name} {'enabled' if b.enabled else 'disabled'}")
 
+    def demolish_selected_building(self):
+        """Remove the selected building and refund every resource it was built from.
+        The HQ storage depot (not player-buildable) can't be demolished. Any pending
+        construction job on the tile is cancelled and its worker freed."""
+        b = self.selected_building
+        if b is None:
+            return
+        info = config.BUILDINGS[b.btype]
+        if not info.get("buildable", True):
+            self.log(f"{b.name} can't be demolished")
+            return
+        # Cancel any construction job on the tile (claimed or not) and free its worker.
+        for job in list(self.jobs.jobs):
+            if job.q == b.q and job.r == b.r and job.jtype == CONSTRUCT:
+                ag = job.agent
+                if ag is not None:
+                    ag.job = None
+                    ag.state = "IDLE"
+                    ag.path = []
+                    ag.phase = None
+                self.jobs.remove(job)
+        # Refund the full build cost (it was all spent up-front at placement).
+        cost = info.get("cost", {})
+        for res, n in cost.items():
+            self.economy.add(res, n)
+        # Detach from the tile and the buildings list, then deselect.
+        self.world.get_tile(b.q, b.r).building = None
+        if b in self.buildings:
+            self.buildings.remove(b)
+        self.selected_building = None
+        refund = " ".join(f"{n}{config.RESOURCE_ABBR.get(res, res[:2].title())}"
+                          for res, n in cost.items())
+        self.log(f"{b.name} demolished" + (f" (+{refund})" if refund else ""))
+
     # ------------------------------------------------------------------ camera
     def center_camera_home(self):
         """Recenter the view on the HQ so you can't get lost while panning."""

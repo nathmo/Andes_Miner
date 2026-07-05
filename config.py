@@ -12,8 +12,8 @@ WINDOW_HEIGHT = 800
 FPS = 60
 TITLE = "Andes — Overseer"
 
-# Real-time simulation speed multipliers the player can toggle (1x/2x/3x).
-SPEED_STEPS = [1.0, 2.0, 3.0]
+# Real-time simulation speed multipliers the player can toggle (1x/4x/8x).
+SPEED_STEPS = [1.0, 4.0, 8.0]
 
 AUTOSAVE_INTERVAL = 90.0          # seconds between auto-saves
 SAVE_FILE = "andes_save.json"
