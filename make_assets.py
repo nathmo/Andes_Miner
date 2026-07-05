@@ -101,6 +101,24 @@ def floor_tile_sprite(fill, road=False):
     return s
 
 
+def drop_sprite(res, px=48):
+    """A small heap of a resource sitting on the ground, tinted by that resource's
+    colour. One per resource so each pickup can be edited (assets/drop_<res>.png)."""
+    s = pygame.Surface((px, px), pygame.SRCALPHA)
+    col = config.RESOURCE_COLOR.get(res, (200, 200, 200))
+    cx, cy = px // 2, int(px * 0.56)
+    for (ox, oy, rr, sh) in [(-0.18, 0.05, 0.24, 0.82), (0.18, 0.07, 0.22, 0.70),
+                             (0.00, -0.10, 0.27, 1.06)]:
+        r = int(px * rr)
+        cc = _shade(col, sh)
+        pos = (int(cx + ox * px), int(cy + oy * px))
+        pygame.draw.circle(s, cc, pos, r)
+        pygame.draw.circle(s, _shade(cc, 0.5), pos, r, 2)
+    pygame.draw.circle(s, _shade(col, 1.35),
+                       (int(cx - 0.06 * px), int(cy - 0.16 * px)), max(2, px // 14))
+    return s
+
+
 def building_sprite(col, letter):
     n = 84
     s = pygame.Surface((n, n), pygame.SRCALPHA)
@@ -244,12 +262,17 @@ def main():
     # tiles: one cube per rock type, plus the three floor states
     for key, info in config.ROCK_TYPES.items():
         _save(rock_tile_sprite(info[1]), "tile_" + key)
-    _save(floor_tile_sprite(config.COL_RUBBLE), "tile_rubble")
+    _save(floor_tile_sprite(config.COL_RUBBLE), "tile_rubble")         # base art, tinted per rock at runtime
     _save(floor_tile_sprite(config.COL_EXCAVATED), "tile_excavated")   # generic fallback
     _save(floor_tile_sprite(config.COL_ROAD, road=True), "tile_road")
-    # One excavated floor per rock type, tinted so you can read what was dug.
+    # One excavated floor per rock type, tinted so you can read what was dug. Rubble
+    # is NOT baked per-rock: the renderer colour-codes the single tile_rubble art to
+    # each rock at runtime, so replacing tile_rubble.png recolours every variant.
     for key, info in config.ROCK_TYPES.items():
         _save(floor_tile_sprite(_excavated_fill(info[1])), "tile_excavated_" + key)
+    # One editable pickup sprite per resource that ends up on the ground.
+    for res in config.RESOURCES:
+        _save(drop_sprite(res), "drop_" + res)
 
     _save(worker_sprite(), "worker")
     for key, info in config.VEHICLES.items():

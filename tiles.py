@@ -53,6 +53,15 @@ class Tile:
         return tuple(int(c * 0.88) for c in mix)
 
     @property
+    def rubble_color(self):
+        """Broken-rock colour: the neutral rubble tone pulled halfway toward this
+        rock and darkened, so rubble from basalt reads darker/bluer than rubble
+        from rhyolite — and darker than the excavated floor. Mirror in make_assets._rubble_fill."""
+        base = self.rockinfo[1]
+        mix = tuple(int(0.5 * u + 0.5 * b) for u, b in zip(config.COL_RUBBLE, base))
+        return tuple(int(c * 0.85) for c in mix)
+
+    @property
     def mine_time(self):
         return self.rockinfo[2]
 

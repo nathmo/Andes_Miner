@@ -33,6 +33,7 @@ class Renderer:
         self.font = pygame.font.SysFont("consolas", 14)
         self.font_small = pygame.font.SysFont("consolas", 11)
         self._sprite_cache = {}      # (key, target_w) -> scaled Surface
+        self._rubble_cache = {}      # rock key -> tile_rubble art recoloured to that rock
         self.env = None              # sky ambiance (clouds + birds), lazily created
         self._last_ticks = None
         self._sky_cache = None       # cached vertical sky gradient (behind terrain)
@@ -60,6 +61,29 @@ class Renderer:
             sc = pygame.transform.smoothscale(sprite, (tw, th))
             self._sprite_cache[ck] = sc
         surface.blit(sc, sc.get_rect(center=(int(cx), int(cy))))
+
+    def _rubble_variant(self, rock):
+        """The single tile_rubble sprite recoloured toward `rock`'s hue (cached per
+        rock). The rock colour is normalised to full brightness and blended with
+        white, then multiplied over the (mostly grey) rubble art — so it takes on the
+        rock's colour without going dark, and any real art dropped in as tile_rubble
+        .png is recoloured the same way. None if there is no rubble sprite at all."""
+        var = self._rubble_cache.get(rock)
+        if var is None:
+            base_spr = assets.get_sprite("tile_rubble")
+            if base_spr is None:
+                return None
+            base = config.ROCK_TYPES[rock][1]
+            m = max(base) or 1
+            strength = 0.6                       # 0 = no tint, 1 = full rock hue
+            eff = tuple(min(255, int(255 * (1 - strength) + (c * 255.0 / m) * strength))
+                        for c in base)
+            var = base_spr.copy()
+            tint = pygame.Surface(var.get_size(), pygame.SRCALPHA)
+            tint.fill((*eff, 255))
+            var.blit(tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)  # keeps alpha
+            self._rubble_cache[rock] = var
+        return var
 
     # ------------------------------------------------------------------ main
     def draw(self, surface, game):
@@ -134,14 +158,16 @@ class Renderer:
         else:
             if tile.state == ROAD:
                 key, fill = "tile_road", config.COL_ROAD
+                sprite = assets.get_sprite(key)
             elif tile.state == EXCAVATED:
                 # tinted per original rock so excavated andesite != excavated basalt
                 key, fill = "tile_excavated_" + tile.rock, tile.excavated_color
+                sprite = assets.get_sprite(key) or assets.get_sprite("tile_excavated")
             else:
-                key, fill = "tile_rubble", config.COL_RUBBLE
-            sprite = assets.get_sprite(key)
-            if sprite is None and tile.state == EXCAVATED:
-                sprite = assets.get_sprite("tile_excavated")   # generic fallback
+                # rubble: recolour the single tile_rubble art to the rock it was
+                # broken from, at runtime (so editing tile_rubble.png retints all).
+                key, fill = "rubble_" + tile.rock, tile.rubble_color
+                sprite = self._rubble_variant(tile.rock)
             if sprite:
                 self._blit_tile(surface, key, sprite, cx, cy, hex_w)
             else:
@@ -183,17 +209,24 @@ class Renderer:
                     continue
                 wx, wy = hexgrid.hex_to_pixel(q, r, config.HEX_SIZE)
                 cx, cy = cam.world_to_screen(wx, wy)
-                # up to 3 markers total, one colour per resource on the pile
-                cols = []
+                # up to 3 markers total, one per unit on the pile. Each is an
+                # editable per-resource sprite (assets/drop_<res>.png); if the PNG
+                # is missing we fall back to the old coloured dot.
+                marks = []
                 for res, amt in tile.drops.items():
-                    cols += [config.RESOURCE_COLOR.get(res, (200, 200, 200))] * amt
-                cols = cols[:3]
+                    marks += [res] * amt
+                marks = marks[:3]
                 rad = max(3, int(size * 0.20))
-                n = len(cols)
-                for i, col in enumerate(cols):
+                n = len(marks)
+                for i, res in enumerate(marks):
                     ox = cx + (i - (n - 1) / 2.0) * rad * 0.95
-                    pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
-                    pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
+                    spr = assets.get_sprite("drop_" + res)
+                    if spr:
+                        self._blit_sprite(surface, "drop_" + res, spr, ox, cy, rad * 2)
+                    else:
+                        col = config.RESOURCE_COLOR.get(res, (200, 200, 200))
+                        pygame.draw.circle(surface, col, (int(ox), int(cy)), rad)
+                        pygame.draw.circle(surface, _shade(col, 0.6), (int(ox), int(cy)), rad, 1)
 
     def _draw_sky(self, surface, game, cam):
         if not (game.show_clouds or game.show_birds):
