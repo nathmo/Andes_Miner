@@ -2,11 +2,7 @@
 
 [![Build desktop apps](https://github.com/nathmo/Andes_Miner/actions/workflows/build.yml/badge.svg)](https://github.com/nathmo/Andes_Miner/actions/workflows/build.yml)
 
-You are the **Overseer**: a camera over an endless Andean slope. Mark rock for
-mining, and your workers dig it out, haul the ore home, clear rubble, and lay
-roads. Refine ore into metal, build a vehicle workshop, and grow from three
-workers with hand tools into a fleet of mining machines. 
-As you reach villages, connect them together with a road network while keeping an eye on your CO2 emmission by switching to renewable energy.
+You are the Overseer of a mining company on an endless Andean slope. Mark rock for mining, and your workers dig it out, haul the ore home, clear rubble, and lay roads. Refine ore into metal, build a vehicle workshop, and grow from three workers with hand tools into a fleet of mining machines. As you reach villages, connect them together with a road network while keeping an eye on your CO2 emmission by switching to renewable energy.
 
 ![Andes gameplay: roads radiating from HQ across an Andean slope of shaded hex cubes](docs/screenshot.png)
 
