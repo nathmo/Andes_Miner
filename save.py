@@ -181,6 +181,6 @@ def load_game(path=config.SAVE_FILE, camera=None):
     game._backup_step = data.get("backup_step", 0)
     game.show_clouds = data.get("show_clouds", True)
     game.show_birds = data.get("show_birds", False)
-    game.ui_scale = data.get("ui_scale", 1.0)
+    game.ui_scale = data.get("ui_scale", 1.5)
     game._ensure_depot()          # add the depot to saves that predate it
     return game
